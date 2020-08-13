@@ -7,33 +7,58 @@
     android:background="#EEEEEE"
     tools:context=".MainActivity">
 
-    <androidx.cardview.widget.CardView
-        android:layout_width="wrap_content"
+    <com.yandex.mapkit.mapview.MapView
+        android:id="@+id/mapview"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="0dp"
         android:layout_height="200dp"
-        app:cardCornerRadius="20dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
-        <com.mancj.materialsearchbar.MaterialSearchBar
-            android:id="@+id/searchBar"
-            style="@style/MaterialSearchBarLight"
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:mt_hint="ДК &quot; Металлург &quot;"
-            app:mt_maxSuggestionsCount="10"
-            app:mt_placeholder="Введите название остановки"
-            app:mt_speechMode="false"
-            tools:visibility="invisible" />
-    </androidx.cardview.widget.CardView>
+            android:layout_height="215dp"
+            app:cardBackgroundColor="#FFF3F3F3"
+            app:cardCornerRadius="20dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
-    <com.yandex.mapkit.mapview.MapView
-        android:id="@+id/mapview"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+            <com.mancj.materialsearchbar.MaterialSearchBar
+                android:id="@+id/searchBar"
+                style="@style/MaterialSearchBarLight"
+                android:layout_width="match_parent"
+                android:layout_height="61dp"
+                android:hapticFeedbackEnabled="true"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:mt_backIconTint="#B6B6B6"
+                app:mt_clearIconTint="#B6B6B6"
+                app:mt_dividerColor="#FFFFFF"
+                app:mt_hint="ДК &quot; Металлург &quot;"
+                app:mt_maxSuggestionsCount="10"
+                app:mt_placeholder="Введите название остановки"
+                app:mt_placeholderColor="#A6A6A6"
+                app:mt_roundedSearchBarEnabled="false"
+                app:mt_searchBarColor="#FFFFFF"
+                app:mt_searchIconTint="#B6B6B6"
+                app:mt_speechMode="false"
+                tools:visibility="visible">
 
-    </com.yandex.mapkit.mapview.MapView>
+            </com.mancj.materialsearchbar.MaterialSearchBar>
+        </androidx.cardview.widget.CardView>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
