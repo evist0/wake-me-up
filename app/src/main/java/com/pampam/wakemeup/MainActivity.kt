@@ -3,8 +3,6 @@ package com.pampam.wakemeup
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
-import android.location.Location
-import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
@@ -12,6 +10,8 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.Observer
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -19,74 +19,89 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.pampam.wakemeup.databinding.ActivityMainBinding
+import kotlinx.android.synthetic.main.activity_main.*
+import org.koin.android.ext.koin.androidContext
+import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.context.startKoin
+import org.koin.dsl.module
 
 
-class MainActivity : AppCompatActivity(), OnMapReadyCallback {
+class MainActivity : AppCompatActivity(), OnMapReadyCallback,
+    GoogleMap.OnCameraMoveStartedListener {
 
     private var permissionRequestCode = 0
 
-    private lateinit var mMap: GoogleMap
-    private lateinit var locationMarker: Marker
-
-    private lateinit var locationManager: LocationManager
-    private var locationListener: LocationListener = object : LocationListener {
-
-        override fun onLocationChanged(location: Location) {
-            val newLatLng = LatLng(location.latitude, location.longitude)
-
-            locationMarker.position = newLatLng
-
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(newLatLng))
-
-            val msg = "New Latitude: " + location.latitude + "New Longitude: " + location.longitude
-            Toast.makeText(this@MainActivity, msg, Toast.LENGTH_LONG).show()
-        }
-
-        override fun onStatusChanged(
-            provider: String,
-            status: Int,
-            extras: Bundle
-        ) {
-        }
-
-        override fun onProviderEnabled(provider: String) {}
-        override fun onProviderDisabled(provider: String) {}
+    private lateinit var binding: ActivityMainBinding
+    private val mainActivityViewModel by viewModel<MainActivityViewModel>()
+    private val appModule = module {
+        single { getSystemService(Context.LOCATION_SERVICE) as LocationManager }
+        single { LocationService(get(), get()) }
+        single { LocationRepository(get()) }
+        single { MainActivityViewModel(get()) }
     }
+
+    private lateinit var mMap: GoogleMap
+    private var locationMarker: Marker? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
 
-        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
+
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
+        with(googleMap) {
+            setOnCameraMoveStartedListener(this@MainActivity)
+        }
+
         when {
             ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED -> {
-                locationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER,
-                    2000,
-                    1.0f,
-                    locationListener
-                )
-
-                val lastLocation =
-                    locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-
-                if (lastLocation != null) {
-                    locationMarker = mMap.addMarker(
-                        MarkerOptions().title("Your position")
-                            .position(LatLng(lastLocation.latitude, lastLocation.longitude))
-                    )
+                startKoin {
+                    androidContext(this@MainActivity)
+                    modules(appModule)
                 }
+                binding.viewModel = mainActivityViewModel
+                binding.lifecycleOwner = this
+
+                showMeButton.setOnClickListener {
+                    mainActivityViewModel.isUserFocused.value =
+                        !mainActivityViewModel.isUserFocused.value!!
+
+                    if (mainActivityViewModel.isUserFocused.value == true) {
+                        val userLatLng = LatLng(
+                            mainActivityViewModel.location.value!!.latitude,
+                            mainActivityViewModel.location.value!!.longitude
+                        )
+                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 17.0f))
+                    }
+                }
+
+                mainActivityViewModel.location.observe(this,
+                    Observer { location ->
+                        val newLatLng = LatLng(location.latitude, location.longitude)
+                        if (locationMarker == null) {
+                            locationMarker = mMap.addMarker(
+                                MarkerOptions().title("Your position").position(newLatLng)
+                            )
+                        } else {
+                            locationMarker!!.position =
+                                newLatLng
+                        }
+
+                        if (mainActivityViewModel.isUserFocused.value == true) {
+                            mMap.moveCamera(CameraUpdateFactory.newLatLng(newLatLng))
+                        }
+                    })
             }
             shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE) -> {
                 Toast.makeText(this, "Нам необходимо знать, когда вас будить.", Toast.LENGTH_SHORT)
@@ -97,6 +112,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
                     permissionRequestCode
                 )
+            }
+        }
+    }
+
+    override fun onCameraMoveStarted(reason: Int) {
+        when (reason) {
+            GoogleMap.OnCameraMoveStartedListener.REASON_GESTURE -> {
+                mainActivityViewModel.isUserFocused.value = false
             }
         }
     }
