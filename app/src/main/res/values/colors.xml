@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorStatusBar">#44FFFFFF</color>
-    <color name="colorPrimaryDark">#3700B3</color>
-    <color name="colorAccent">#03DAC5</color>
+    <color name="colorPrimary">#279AFF</color>
+    <color name="colorCard_0">#FFFFFF</color>
+    <color name="colorCard_1">#F3F3F3</color>
+    <color name="colorCard_2">#E3E3E3</color>
+    <color name="colorText_primary">#111111</color>
+    <color name="colorText_neutral">#B5B5B5</color>
+    <color name="colorIco_neutral">#636363</color>
 </resources>
