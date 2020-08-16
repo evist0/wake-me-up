@@ -1,5 +1,9 @@
 <resources>
     <string name="app_name">Wake me up!</string>
-    <string name="mapkit_api_key">51764e68-c17a-4d63-8f9b-2cec05ceb2d0</string>
     <string name="show_me">Show me</string>
+    <string name="location_unavailable">Location not available</string>
+    <string name="location_turn_on">Turn on</string>
+    <string name="notification_open">Open</string>
+    <string name="notification_close">Cancel</string>
+    <string name="notification_main_text">We will wake you up!</string>
 </resources>

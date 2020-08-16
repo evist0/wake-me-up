@@ -8,17 +8,18 @@
 
         <variable
             name="viewModel"
-            type="com.pampam.wakemeup.MainActivityViewModel" />
+            type="com.pampam.wakemeup.ui.MainActivityViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/root"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/colorCard_2"
-        tools:context=".MainActivity">
+        tools:context=".ui.MainActivity">
 
         <androidx.fragment.app.FragmentContainerView
-            android:id="@+id/map"
+            android:id="@+id/mapFragmentView"
             android:name="com.google.android.gms.maps.SupportMapFragment"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -31,7 +32,7 @@
         </androidx.fragment.app.FragmentContainerView>
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/constraintLayout"
+            android:id="@+id/menu"
             android:layout_width="0dp"
             android:layout_height="200dp"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -75,20 +76,19 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/showMeButton"
+            android:id="@+id/myLocationButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"
-            android:layout_marginRight="16dp"
             android:layout_marginBottom="16dp"
             android:contentDescription="@string/show_me"
             android:longClickable="false"
+            android:tint="@{viewModel.isFocused ? @color/colorPrimary : @color/colorIco_neutral}"
             android:src="@drawable/ic_baseline_near_me_24"
-            android:tint="@{viewModel.isUserFocused ? @color/colorPrimary : @color/colorIco_neutral}"
             app:backgroundTint="@color/colorCard_0"
             app:fabCustomSize="50dp"
             app:fabSize="normal"
-            app:layout_constraintBottom_toTopOf="@+id/constraintLayout"
+            app:layout_constraintBottom_toTopOf="@+id/menu"
             app:layout_constraintEnd_toEndOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
