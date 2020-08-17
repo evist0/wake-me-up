@@ -1,4 +1,4 @@
-include ':library'
+include ':MaterialSearchBarLibrary'
 include ':app'
-project(':library').projectDir = new File(rootDir, 'MaterialSearchBar/library/')
+project(':MaterialSearchBarLibrary').projectDir = new File(rootDir, 'MaterialSearchBar/library/')
 rootProject.name = "Wake me up!"
