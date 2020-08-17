@@ -86,6 +86,7 @@ class MainActivity : AppCompatActivity() {
                         PopupAction.ACCEPT -> {
                             val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
                             startActivity(intent)
+                            locationAvailabilityPopUp.hide()
                         }
 
                         PopupAction.DENI -> {
@@ -146,7 +147,7 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     if (!location.available) {
-                        locationAvailabilityPopUp.show(rootView)
+                        locationAvailabilityPopUp.show(rootOfRootView)
                     } else {
                         locationAvailabilityPopUp.hide()
                     }
