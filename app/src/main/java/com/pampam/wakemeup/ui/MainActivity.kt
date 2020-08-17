@@ -16,6 +16,7 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.animation.doOnEnd
 import androidx.core.app.ActivityCompat
+import androidx.core.view.marginBottom
 import androidx.core.view.marginStart
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
@@ -108,7 +109,7 @@ class MainActivity : AppCompatActivity() {
             supportFragmentManager.findFragmentById(R.id.mapFragmentView) as SupportMapFragment
         mapFragment.getMapAsync {
             map = it.apply {
-                setPadding(searchBar.marginStart, 0, 0, menuView.height)
+                setPadding(searchBar.marginStart, 0, 0, searchBar.height + searchBar.marginBottom)
 
                 setOnCameraMoveStartedListener { reason ->
                     when (reason) {
@@ -154,7 +155,7 @@ class MainActivity : AppCompatActivity() {
                     if (location.status.isAvailable()) {
                         locationAvailabilityPopUp.hide()
                     } else {
-                        locationAvailabilityPopUp.show(rootOfRootView)
+                        locationAvailabilityPopUp.show(rootView)
                     }
                 }
             })

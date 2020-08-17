@@ -1,0 +1,3 @@
+[submodule "MaterialSearchBar"]
+	path = MaterialSearchBar
+	url = https://github.com/mancj/MaterialSearchBar
