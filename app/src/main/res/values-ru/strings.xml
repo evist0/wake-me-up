@@ -1,5 +1,4 @@
 <resources>
-    <string name="app_name">Разбуди меня</string>
     <string name="show_me">Покажи меня</string>
     <string name="location_unavailable">Местоположение недоступно</string>
     <string name="location_turn_on">Включить</string>

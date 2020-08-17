@@ -11,85 +11,104 @@
             type="com.pampam.wakemeup.ui.MainActivityViewModel" />
     </data>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/root"
+    <FrameLayout
+        android:id="@+id/rootOfRootView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/colorCard_2"
-        tools:context=".ui.MainActivity">
-
-        <androidx.fragment.app.FragmentContainerView
-            android:id="@+id/mapFragmentView"
-            android:name="com.google.android.gms.maps.SupportMapFragment"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:context=".MapsActivity">
-
-        </androidx.fragment.app.FragmentContainerView>
+        android:layout_height="match_parent">
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/menu"
-            android:layout_width="0dp"
-            android:layout_height="200dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent">
+            android:id="@+id/rootView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/colorCard_2"
+            tools:context=".ui.MainActivity">
 
-            <androidx.cardview.widget.CardView
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/mapViewGroup"
                 android:layout_width="match_parent"
-                android:layout_height="215dp"
-                android:clipChildren="true"
-                app:cardBackgroundColor="@color/colorCard_1"
-                app:cardCornerRadius="20dp"
+                android:layout_height="0dp"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
 
-                <com.mancj.materialsearchbar.MaterialSearchBar
-                    android:id="@+id/searchBar"
-                    style="@style/MaterialSearchBarLight"
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/myLocationButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="16dp"
+                    android:layout_marginRight="16dp"
+                    android:layout_marginBottom="16dp"
+                    android:contentDescription="@string/show_me"
+                    android:longClickable="false"
+                    android:src="@drawable/ic_baseline_near_me_24"
+                    android:tint="@{viewModel.isFocused ? @color/colorPrimary : @color/colorIco_neutral}"
+                    app:backgroundTint="@color/colorCard_0"
+                    app:fabCustomSize="50dp"
+                    app:fabSize="normal"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent" />
+
+                <androidx.fragment.app.FragmentContainerView
+                    android:id="@+id/mapView"
+                    android:name="com.google.android.gms.maps.SupportMapFragment"
                     android:layout_width="match_parent"
-                    android:layout_height="61dp"
-                    android:hapticFeedbackEnabled="true"
+                    android:layout_height="match_parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:mt_backIconTint="@color/colorIco_neutral"
-                    app:mt_clearIconTint="@color/colorIco_neutral"
-                    app:mt_hint="ДК &quot; Металлург &quot;"
-                    app:mt_maxSuggestionsCount="10"
-                    app:mt_placeholder="Введите название остановки"
-                    app:mt_placeholderColor="@color/colorText_neutral"
-                    app:mt_roundedSearchBarEnabled="false"
-                    app:mt_searchBarColor="@color/colorCard_0"
-                    app:mt_searchIconTint="@color/colorIco_neutral"
-                    app:mt_speechMode="false"
-                    tools:visibility="visible">
+                    tools:context=".MapsActivity">
 
-                </com.mancj.materialsearchbar.MaterialSearchBar>
-            </androidx.cardview.widget.CardView>
+                </androidx.fragment.app.FragmentContainerView>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/menuView"
+                android:layout_width="0dp"
+                android:layout_height="200dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent">
+
+                <androidx.cardview.widget.CardView
+                    android:layout_width="match_parent"
+                    android:layout_height="215dp"
+                    android:clipChildren="true"
+                    app:cardBackgroundColor="@color/colorCard_1"
+                    app:cardCornerRadius="20dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <com.mancj.materialsearchbar.MaterialSearchBar
+                        android:id="@+id/searchBar"
+                        style="@style/MaterialSearchBarLight"
+                        android:layout_width="match_parent"
+                        android:layout_height="61dp"
+                        android:hapticFeedbackEnabled="true"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:mt_backIconTint="@color/colorIco_neutral"
+                        app:mt_clearIconTint="@color/colorIco_neutral"
+                        app:mt_hint="ДК &quot; Металлург &quot;"
+                        app:mt_maxSuggestionsCount="10"
+                        app:mt_placeholder="Введите название остановки"
+                        app:mt_placeholderColor="@color/colorText_neutral"
+                        app:mt_roundedSearchBarEnabled="false"
+                        app:mt_searchBarColor="@color/colorCard_0"
+                        app:mt_searchIconTint="@color/colorIco_neutral"
+                        app:mt_speechMode="false"
+                        tools:visibility="visible">
+
+                    </com.mancj.materialsearchbar.MaterialSearchBar>
+                </androidx.cardview.widget.CardView>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
+    </FrameLayout>
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/myLocationButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            android:layout_marginBottom="16dp"
-            android:contentDescription="@string/show_me"
-            android:longClickable="false"
-            android:tint="@{viewModel.isFocused ? @color/colorPrimary : @color/colorIco_neutral}"
-            android:src="@drawable/ic_baseline_near_me_24"
-            app:backgroundTint="@color/colorCard_0"
-            app:fabCustomSize="50dp"
-            app:fabSize="normal"
-            app:layout_constraintBottom_toTopOf="@+id/menu"
-            app:layout_constraintEnd_toEndOf="parent" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

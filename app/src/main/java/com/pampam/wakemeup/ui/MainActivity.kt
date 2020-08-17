@@ -46,6 +46,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var myLocationMarker: Marker
     private lateinit var myLocationMarkerAnimator: ValueAnimator
 
+    private lateinit var locationAvailabilityPopUp: PopupView
     private lateinit var locationAvailabilitySnackbar: Snackbar
     private lateinit var locationPermissionSnackbar: Snackbar
 
@@ -80,15 +81,21 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        locationAvailabilitySnackbar =
-            Snackbar.make(
-                mapFragmentView,
-                getString(R.string.location_unavailable),
-                Snackbar.LENGTH_INDEFINITE
-            ).setAction(R.string.location_turn_on) {
-                val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                startActivity(intent)
-            }
+        locationAvailabilityPopUp =
+            PopupView(this).setTitle(getString(R.string.location_unavailable))
+                .setCallback { result ->
+                    when (result) {
+                        PopupAction.ACCEPT -> {
+                            val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                            startActivity(intent)
+                            locationAvailabilityPopUp.hide()
+                        }
+
+                        PopupAction.DENI -> {
+                            locationAvailabilityPopUp.hide()
+                        }
+                    }
+                }
 
         locationPermissionSnackbar = Snackbar.make(
             mapFragmentView,
@@ -121,9 +128,7 @@ class MainActivity : AppCompatActivity() {
                                 myLocationMarker.position,
                                 location.latLng
                             ).apply {
-                                duration =
-                                    if (location.status == LocationStatus.FirstAvailable) 0
-                                    else 1000
+                                duration = if (location.first) 0 else 1000
                                 addUpdateListener {
                                     myLocationMarker.apply {
                                         position = it.animatedValue as LatLng
@@ -144,9 +149,9 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     if (location.status.isAvailable()) {
-                        locationAvailabilitySnackbar.dismiss()
+                        locationAvailabilityPopUp.hide()
                     } else {
-                        locationAvailabilitySnackbar.show()
+                        locationAvailabilityPopUp.show(rootOfRootView)
                     }
                 }
             })
