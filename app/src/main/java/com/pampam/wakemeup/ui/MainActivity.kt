@@ -53,13 +53,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val navBarHeight by lazy {
-        var statusBarHeight = 0
+        var navBarHeight = 0
         val resourceId = resources.getIdentifier("navigation_bar_height", "dimen", "android")
         if (resourceId > 0) {
-            statusBarHeight = resources.getDimensionPixelSize(resourceId)
+            navBarHeight = resources.getDimensionPixelSize(resourceId)
         }
 
-        statusBarHeight
+        navBarHeight
     }
 
     private lateinit var binding: ActivityMainBinding
