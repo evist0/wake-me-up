@@ -12,5 +12,5 @@ class MainActivityViewModel(
 
     val myLastLocation: LiveData<Location> = myLocationRepository.myLastLocation
     val isListenToLocation = myLocationRepository.isListenToLocation
-    val isFocused = MutableLiveData<Boolean>(false)
+    val isFocused = MutableLiveData<Boolean>(true)
 }

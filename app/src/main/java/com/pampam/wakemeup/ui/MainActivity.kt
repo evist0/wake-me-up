@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.animation.doOnEnd
 import androidx.core.app.ActivityCompat
 import androidx.core.view.marginBottom
+import androidx.core.view.marginEnd
 import androidx.core.view.marginStart
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
@@ -107,9 +108,21 @@ class MainActivity : AppCompatActivity() {
 
         val mapFragment =
             supportFragmentManager.findFragmentById(R.id.mapFragmentView) as SupportMapFragment
+
+        var statusBarHeight = 0
+        val resourceId = resources.getIdentifier("status_bar_height", "dimen", "android")
+        if (resourceId > 0) {
+            statusBarHeight = resources.getDimensionPixelSize(resourceId)
+        }
+
         mapFragment.getMapAsync {
             map = it.apply {
-                setPadding(searchBar.marginStart, 0, 0, searchBar.height + searchBar.marginBottom)
+                setPadding(
+                    searchBar.marginStart,
+                    statusBarHeight,
+                    searchBar.marginEnd,
+                    searchBar.height + searchBar.marginBottom
+                )
 
                 setOnCameraMoveStartedListener { reason ->
                     when (reason) {

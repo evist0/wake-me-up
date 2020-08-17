@@ -44,6 +44,10 @@ class PopupView(context: Context) : FrameLayout(context) {
     fun show(attachTo: ViewGroup) {
         attachedTo = attachTo
 
+        if (popup_message.text == "") {
+            popup_message.visibility = View.GONE
+        }
+
         attachedTo!!.addView(this)
     }
 
