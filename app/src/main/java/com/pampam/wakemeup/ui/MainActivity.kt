@@ -16,6 +16,7 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.animation.doOnEnd
 import androidx.core.app.ActivityCompat
+import androidx.core.view.marginStart
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -28,7 +29,6 @@ import com.google.android.material.snackbar.Snackbar
 import com.pampam.wakemeup.BuildConfig
 import com.pampam.wakemeup.R
 import com.pampam.wakemeup.data.MyLocationService
-import com.pampam.wakemeup.data.model.LocationStatus
 import com.pampam.wakemeup.databinding.ActivityMainBinding
 import com.pampam.wakemeup.ui.animation.LatLngEvaluator
 import kotlinx.android.synthetic.main.activity_main.*
@@ -55,6 +55,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         binding =
             DataBindingUtil.setContentView<ActivityMainBinding>(
                 this,
@@ -107,6 +108,8 @@ class MainActivity : AppCompatActivity() {
             supportFragmentManager.findFragmentById(R.id.mapFragmentView) as SupportMapFragment
         mapFragment.getMapAsync {
             map = it.apply {
+                setPadding(searchBar.marginStart, 0, 0, menuView.height)
+
                 setOnCameraMoveStartedListener { reason ->
                     when (reason) {
                         GoogleMap.OnCameraMoveStartedListener.REASON_GESTURE -> {
@@ -128,7 +131,7 @@ class MainActivity : AppCompatActivity() {
                                 myLocationMarker.position,
                                 location.latLng
                             ).apply {
-                                duration = if (location.first) 0 else 1000
+                                duration = if (location.status.isAvailable()) 0 else 1000
                                 addUpdateListener {
                                     myLocationMarker.apply {
                                         position = it.animatedValue as LatLng

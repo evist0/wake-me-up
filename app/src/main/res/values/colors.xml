@@ -3,8 +3,8 @@
     <color name="colorPrimary">#279AFF</color>
     <color name="colorAccent">#279AFF</color>
     <color name="colorCard_0">#FFFFFF</color>
-    <color name="colorCard_1">#F3F3F3</color>
-    <color name="colorCard_2">#E3E3E3</color>
+    <color name="colorCard_1">#EAEAEA</color>
+    <color name="colorCard_2">#D3D3D3</color>
     <color name="colorText_primary">#111111</color>
     <color name="colorText_neutral">#B5B5B5</color>
     <color name="colorIco_neutral">#636363</color>
