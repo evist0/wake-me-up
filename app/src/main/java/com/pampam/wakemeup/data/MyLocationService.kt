@@ -55,10 +55,13 @@ class MyLocationService : Service() {
 
                 result.lastLocation?.apply {
 
+                    val myPreviousLocation = locationRepository.myLastLocation.value
                     val myLocationEntity =
                         Location(
                             status =
-                            if (locationRepository.myLastLocation.value == null)
+                            if (myPreviousLocation == null
+                                || myPreviousLocation.status == LocationStatus.Unavailable
+                            )
                                 LocationStatus.FirstAvailable
                             else
                                 LocationStatus.Available,
