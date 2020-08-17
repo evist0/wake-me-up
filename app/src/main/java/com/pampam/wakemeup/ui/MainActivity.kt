@@ -148,7 +148,7 @@ class MainActivity : AppCompatActivity() {
                     searchBar.marginStart,
                     statusBarHeight,
                     searchBar.marginEnd,
-                    searchBar.height + searchBar.marginBottom
+                    searchBar.height + searchBar.marginBottom + navBarHeight
                 )
 
                 setOnCameraMoveStartedListener { reason ->
