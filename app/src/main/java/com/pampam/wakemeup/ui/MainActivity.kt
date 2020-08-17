@@ -33,7 +33,6 @@ import com.pampam.wakemeup.ui.animation.LatLngEvaluator
 import kotlinx.android.synthetic.main.activity_main.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
-
 private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
 
 class MainActivity : AppCompatActivity() {
@@ -45,6 +44,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var myLocationMarker: Marker
     private lateinit var myLocationMarkerAnimator: ValueAnimator
 
+    private lateinit var locationAvailabilityPopUp: PopupView
     private lateinit var locationAvailabilitySnackbar: Snackbar
     private lateinit var locationPermissionSnackbar: Snackbar
 
@@ -79,24 +79,29 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        locationAvailabilitySnackbar =
-            Snackbar.make(
-                mapFragmentView,
-                getString(R.string.location_unavailable),
-                Snackbar.LENGTH_INDEFINITE
-            ).setAction(R.string.location_turn_on) {
-                val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                startActivity(intent)
-            }
+        locationAvailabilityPopUp =
+            PopupView(this).setTitle(getString(R.string.location_unavailable))
+                .setCallback { result ->
+                    when (result) {
+                        PopupAction.ACCEPT -> {
+                            val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                            startActivity(intent)
+                        }
+
+                        PopupAction.DENI -> {
+                            locationAvailabilityPopUp.hide()
+                        }
+                    }
+                }
 
         locationPermissionSnackbar = Snackbar.make(
-            mapFragmentView,
+            mapView,
             "Location permission required",
             Snackbar.LENGTH_INDEFINITE
         )
 
         val mapFragment =
-            supportFragmentManager.findFragmentById(R.id.mapFragmentView) as SupportMapFragment
+            supportFragmentManager.findFragmentById(R.id.mapView) as SupportMapFragment
         mapFragment.getMapAsync {
             map = it.apply {
                 setOnCameraMoveStartedListener { reason ->
@@ -140,10 +145,10 @@ class MainActivity : AppCompatActivity() {
                             }
                     }
 
-                    if (location.available) {
-                        locationAvailabilitySnackbar.dismiss()
+                    if (!location.available) {
+                        locationAvailabilityPopUp.show(rootView)
                     } else {
-                        locationAvailabilitySnackbar.show()
+                        locationAvailabilityPopUp.hide()
                     }
                 }
             })

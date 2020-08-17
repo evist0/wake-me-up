@@ -1,9 +1,13 @@
 <resources>
-    <string name="app_name">Wake me up!</string>
+    <string name="app_name" translatable="false">Wake me up!</string>
     <string name="show_me">Show me</string>
     <string name="location_unavailable">Location not available</string>
     <string name="location_turn_on">Turn on</string>
     <string name="notification_open">Open</string>
     <string name="notification_close">Cancel</string>
     <string name="notification_main_text">We will wake you up!</string>
+    <string name="popup_title_dummy" translatable="false">Dummy title!</string>
+    <string name="popup_message_dummy" translatable="false">Lorem ipsum, abra-abra-bra.</string>
+    <string name="popup_accept_dummy" translatable="false">OK</string>
+    <string name="popup_deni_dummy" translatable="false">No!</string>
 </resources>
