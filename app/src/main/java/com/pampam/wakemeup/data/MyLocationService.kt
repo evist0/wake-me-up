@@ -15,6 +15,7 @@ import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
 import com.pampam.wakemeup.R
 import com.pampam.wakemeup.data.model.Location
+import com.pampam.wakemeup.data.model.LocationStatus
 import com.pampam.wakemeup.ui.MainActivity
 import org.koin.android.ext.android.inject
 import java.util.concurrent.TimeUnit
@@ -56,8 +57,11 @@ class MyLocationService : Service() {
 
                     val myLocationEntity =
                         Location(
-                            available = true,
-                            first = locationRepository.myLastLocation.value == null,
+                            status =
+                            if (locationRepository.myLastLocation.value == null)
+                                LocationStatus.FirstAvailable
+                            else
+                                LocationStatus.Available,
                             latLng = LatLng(latitude, longitude)
                         )
 
@@ -74,8 +78,7 @@ class MyLocationService : Service() {
 
                     val myLastLocation = locationRepository.myLastLocation.value
                     val myLocationEntity = Location(
-                        available = false,
-                        first = false,
+                        status = LocationStatus.Unavailable,
                         latLng = myLastLocation?.latLng
                     )
 

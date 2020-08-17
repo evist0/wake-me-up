@@ -28,6 +28,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.pampam.wakemeup.BuildConfig
 import com.pampam.wakemeup.R
 import com.pampam.wakemeup.data.MyLocationService
+import com.pampam.wakemeup.data.model.LocationStatus
 import com.pampam.wakemeup.databinding.ActivityMainBinding
 import com.pampam.wakemeup.ui.animation.LatLngEvaluator
 import kotlinx.android.synthetic.main.activity_main.*
@@ -120,7 +121,9 @@ class MainActivity : AppCompatActivity() {
                                 myLocationMarker.position,
                                 location.latLng
                             ).apply {
-                                duration = if (location.first) 0 else 1000
+                                duration =
+                                    if (location.status == LocationStatus.FirstAvailable) 0
+                                    else 1000
                                 addUpdateListener {
                                     myLocationMarker.apply {
                                         position = it.animatedValue as LatLng
@@ -140,7 +143,7 @@ class MainActivity : AppCompatActivity() {
                             }
                     }
 
-                    if (location.available) {
+                    if (location.status.isAvailable()) {
                         locationAvailabilitySnackbar.dismiss()
                     } else {
                         locationAvailabilitySnackbar.show()
