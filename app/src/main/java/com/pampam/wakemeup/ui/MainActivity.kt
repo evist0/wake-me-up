@@ -13,6 +13,7 @@ import android.os.Bundle
 import android.os.IBinder
 import android.provider.Settings
 import android.util.Log
+import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.animation.doOnEnd
 import androidx.core.app.ActivityCompat
@@ -41,6 +42,26 @@ private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
 
 class MainActivity : AppCompatActivity() {
 
+    private val statusBarHeight by lazy {
+        var statusBarHeight = 0
+        val resourceId = resources.getIdentifier("status_bar_height", "dimen", "android")
+        if (resourceId > 0) {
+            statusBarHeight = resources.getDimensionPixelSize(resourceId)
+        }
+
+        statusBarHeight
+    }
+
+    private val navBarHeight by lazy {
+        var statusBarHeight = 0
+        val resourceId = resources.getIdentifier("navigation_bar_height", "dimen", "android")
+        if (resourceId > 0) {
+            statusBarHeight = resources.getDimensionPixelSize(resourceId)
+        }
+
+        statusBarHeight
+    }
+
     private lateinit var binding: ActivityMainBinding
     private val viewModel by viewModel<MainActivityViewModel>()
 
@@ -67,6 +88,17 @@ class MainActivity : AppCompatActivity() {
                     viewModel = this@MainActivity.viewModel
                     lifecycleOwner = this@MainActivity
                 }
+
+        val controlViewLayoutParams = controlView.layoutParams as FrameLayout.LayoutParams
+        controlViewLayoutParams.apply {
+            setMargins(
+                leftMargin,
+                topMargin + statusBarHeight,
+                rightMargin,
+                bottomMargin + navBarHeight
+            )
+        }
+        controlView.layoutParams = controlViewLayoutParams
 
         myLocationButton.setOnClickListener {
             val myLastLocation = viewModel.myLastLocation.value
@@ -109,11 +141,6 @@ class MainActivity : AppCompatActivity() {
         val mapFragment =
             supportFragmentManager.findFragmentById(R.id.mapFragmentView) as SupportMapFragment
 
-        var statusBarHeight = 0
-        val resourceId = resources.getIdentifier("status_bar_height", "dimen", "android")
-        if (resourceId > 0) {
-            statusBarHeight = resources.getDimensionPixelSize(resourceId)
-        }
 
         mapFragment.getMapAsync {
             map = it.apply {
