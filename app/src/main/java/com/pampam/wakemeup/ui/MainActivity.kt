@@ -15,20 +15,23 @@ import android.provider.Settings
 import android.util.Log
 import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.animation.doOnEnd
 import androidx.core.app.ActivityCompat
-import androidx.core.view.marginBottom
 import androidx.core.view.marginEnd
 import androidx.core.view.marginStart
+import androidx.core.widget.addTextChangedListener
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.snackbar.Snackbar
+import com.mancj.materialsearchbar.MaterialSearchBar.OnSearchActionListener
 import com.pampam.wakemeup.BuildConfig
 import com.pampam.wakemeup.R
 import com.pampam.wakemeup.data.MyLocationService
@@ -40,7 +43,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 
 private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionListener {
 
     private val statusBarHeight by lazy {
         var statusBarHeight = 0
@@ -79,16 +82,21 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        binding =
-            DataBindingUtil.setContentView<ActivityMainBinding>(
-                this,
-                R.layout.activity_main
-            )
-                .apply {
-                    viewModel = this@MainActivity.viewModel
-                    lifecycleOwner = this@MainActivity
-                }
+        inflateWithDataBinding()
 
+        adjustControlLayoutTranslucentMargins()
+
+        initMyLocationButton()
+        initSearchBar()
+        initLocationAvailabilityPopup()
+        initLocationPermissionSnackbar()
+        initMapAsync()
+
+        observeSuggestedDestinations()
+
+    }
+
+    private fun adjustControlLayoutTranslucentMargins() {
         val controlViewLayoutParams = controlView.layoutParams as FrameLayout.LayoutParams
         controlViewLayoutParams.apply {
             setMargins(
@@ -99,124 +107,24 @@ class MainActivity : AppCompatActivity() {
             )
         }
         controlView.layoutParams = controlViewLayoutParams
+    }
 
-        myLocationButton.setOnClickListener {
-            val myLastLocation = viewModel.myLastLocation.value
-            if (myLastLocation != null) {
-                viewModel.isFocused.value = !viewModel.isFocused.value!!
-
-                if (viewModel.isFocused.value == true) {
-                    map.animateCamera(
-                        CameraUpdateFactory.newLatLngZoom(
-                            myLocationMarker.position,
-                            17.0f
-                        )
-                    )
+    private fun inflateWithDataBinding() {
+        binding =
+            DataBindingUtil.setContentView<ActivityMainBinding>(
+                this,
+                R.layout.activity_main
+            )
+                .apply {
+                    viewModel = this@MainActivity.viewModel
+                    lifecycleOwner = this@MainActivity
                 }
-            }
-        }
-
-        locationAvailabilityPopUp =
-            PopupView(this).setTitle(getString(R.string.location_unavailable))
-                .setCallback { result ->
-                    when (result) {
-                        PopupAction.ACCEPT -> {
-                            val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                            startActivity(intent)
-                            locationAvailabilityPopUp.hide()
-                        }
-
-                        PopupAction.DENI -> {
-                            locationAvailabilityPopUp.hide()
-                        }
-                    }
-                }
-
-        locationPermissionSnackbar = Snackbar.make(
-            mapFragmentView,
-            "Location permission required",
-            Snackbar.LENGTH_INDEFINITE
-        )
-
-        val mapFragment =
-            supportFragmentManager.findFragmentById(R.id.mapFragmentView) as SupportMapFragment
-
-
-        mapFragment.getMapAsync {
-            map = it.apply {
-                setPadding(
-                    searchBar.marginStart,
-                    statusBarHeight,
-                    searchBar.marginEnd,
-                    searchBar.height + searchBar.marginBottom + navBarHeight
-                )
-
-                setOnCameraMoveStartedListener { reason ->
-                    when (reason) {
-                        GoogleMap.OnCameraMoveStartedListener.REASON_GESTURE -> {
-                            viewModel.isFocused.value = false
-                        }
-                    }
-                }
-            }
-
-            myLocationMarker =
-                map.addMarker(MarkerOptions().position(LatLng(0.0, 0.0)).visible(false))
-
-            viewModel.myLastLocation.observe(this, Observer { location ->
-                if (location != null) {
-                    if (location.latLng != null) {
-                        myLocationMarkerAnimator =
-                            ObjectAnimator.ofObject(
-                                LatLngEvaluator,
-                                myLocationMarker.position,
-                                location.latLng
-                            ).apply {
-                                duration = if (location.status.isAvailable()) 0 else 1000
-                                addUpdateListener {
-                                    myLocationMarker.apply {
-                                        position = it.animatedValue as LatLng
-                                        isVisible = true
-                                    }
-                                }
-                                doOnEnd {
-                                    if (viewModel.isFocused.value == true) {
-                                        map.animateCamera(
-                                            CameraUpdateFactory.newLatLng(
-                                                myLocationMarker.position
-                                            )
-                                        )
-                                    }
-                                }
-                                start()
-                            }
-                    }
-
-                    if (location.status.isAvailable()) {
-                        locationAvailabilityPopUp.hide()
-                    } else {
-                        locationAvailabilityPopUp.show(rootView)
-                    }
-                }
-            })
-        }
     }
 
     override fun onStart() {
         super.onStart()
 
-        locationServiceConnection = object : ServiceConnection {
-            override fun onServiceConnected(p0: ComponentName?, p1: IBinder?) {
-                locationServiceBound = true
-            }
-
-            override fun onServiceDisconnected(p0: ComponentName?) {
-                locationServiceBound = false
-            }
-        }
-
-        val serviceIntent = Intent(this, MyLocationService::class.java)
-        bindService(serviceIntent, locationServiceConnection, Context.BIND_AUTO_CREATE)
+        bindLocationService()
 
         if (foregroundPermissionApproved()) {
             viewModel.isListenToLocation.value = true
@@ -234,6 +142,21 @@ class MainActivity : AppCompatActivity() {
             unbindService(locationServiceConnection)
             locationServiceBound = false
         }
+    }
+
+    private fun bindLocationService() {
+        locationServiceConnection = object : ServiceConnection {
+            override fun onServiceConnected(p0: ComponentName?, p1: IBinder?) {
+                locationServiceBound = true
+            }
+
+            override fun onServiceDisconnected(p0: ComponentName?) {
+                locationServiceBound = false
+            }
+        }
+
+        val serviceIntent = Intent(this, MyLocationService::class.java)
+        bindService(serviceIntent, locationServiceConnection, Context.BIND_AUTO_CREATE)
     }
 
     private fun foregroundPermissionApproved(): Boolean {
@@ -301,5 +224,160 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    override fun onButtonClicked(buttonCode: Int) {
+        TODO("Not yet implemented")
+    }
+
+    override fun onSearchStateChanged(enabled: Boolean) {
+        ConstraintSet().apply {
+            clone(controlView)
+            clear(R.id.searchBar, if (enabled) ConstraintSet.BOTTOM else ConstraintSet.TOP)
+            connect(
+                R.id.searchBar,
+                if (enabled) ConstraintSet.TOP else ConstraintSet.BOTTOM,
+                R.id.controlView,
+                if (enabled) ConstraintSet.TOP else ConstraintSet.BOTTOM
+            )
+            applyTo(controlView)
+        }
+
+        if (enabled) viewModel.onSearchBegin() else viewModel.onSearchEnd()
+    }
+
+    override fun onSearchConfirmed(query: CharSequence?) {
+        viewModel.onSearchConfirmed(query.toString())
+    }
+
+    override fun onMapReady(it: GoogleMap) {
+        map = it.apply {
+            setPadding(
+                searchBar.marginStart,
+                statusBarHeight,
+                searchBar.marginEnd,
+                searchBar.height + navBarHeight
+            )
+
+            setOnCameraMoveStartedListener { reason ->
+                when (reason) {
+                    GoogleMap.OnCameraMoveStartedListener.REASON_GESTURE -> {
+                        viewModel.isFocused.value = false
+                    }
+                }
+            }
+        }
+
+        initMyLocationMarker()
+
+        observeMyLastLocation()
+    }
+
+    private fun observeMyLastLocation() {
+        viewModel.myLastLocation.observe(this, Observer { location ->
+            if (location != null) {
+                if (location.latLng != null) {
+                    myLocationMarkerAnimator =
+                        ObjectAnimator.ofObject(
+                            LatLngEvaluator,
+                            myLocationMarker.position,
+                            location.latLng
+                        ).apply {
+                            duration = if (location.status.isAvailable()) 0 else 1000
+                            addUpdateListener {
+                                myLocationMarker.apply {
+                                    position = it.animatedValue as LatLng
+                                    isVisible = true
+                                }
+                            }
+                            doOnEnd {
+                                if (viewModel.isFocused.value == true) {
+                                    map.animateCamera(
+                                        CameraUpdateFactory.newLatLng(
+                                            myLocationMarker.position
+                                        )
+                                    )
+                                }
+                            }
+                            start()
+                        }
+                }
+
+                if (location.status.isAvailable()) {
+                    locationAvailabilityPopUp.hide()
+                } else {
+                    locationAvailabilityPopUp.show(rootView)
+                }
+            }
+        })
+    }
+
+    private fun initMyLocationMarker() {
+        myLocationMarker =
+            map.addMarker(MarkerOptions().position(LatLng(0.0, 0.0)).visible(false))
+    }
+
+    private fun initMapAsync() {
+        val mapFragment =
+            supportFragmentManager.findFragmentById(R.id.mapFragmentView) as SupportMapFragment
+        mapFragment.getMapAsync(this)
+    }
+
+    private fun initLocationPermissionSnackbar() {
+        locationPermissionSnackbar = Snackbar.make(
+            mapFragmentView,
+            "Location permission required",
+            Snackbar.LENGTH_INDEFINITE
+        )
+    }
+
+    private fun initLocationAvailabilityPopup() {
+        locationAvailabilityPopUp =
+            PopupView(this).setTitle(getString(R.string.location_unavailable))
+                .setCallback { result ->
+                    when (result) {
+                        PopupAction.ACCEPT -> {
+                            val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                            startActivity(intent)
+                            locationAvailabilityPopUp.hide()
+                        }
+
+                        PopupAction.DENI -> {
+                            locationAvailabilityPopUp.hide()
+                        }
+                    }
+                }
+    }
+
+    private fun initSearchBar() {
+        searchBar.searchEditText.addTextChangedListener { editable ->
+            viewModel.destinationSearchQuery.value = editable.toString()
+        }
+        searchBar.setCustomSuggestionAdapter(DestinationsAdapter(layoutInflater))
+        searchBar.setOnSearchActionListener(this)
+    }
+
+    private fun initMyLocationButton() {
+        myLocationButton.setOnClickListener {
+            val myLastLocation = viewModel.myLastLocation.value
+            if (myLastLocation != null) {
+                viewModel.isFocused.value = !viewModel.isFocused.value!!
+
+                if (viewModel.isFocused.value == true) {
+                    map.animateCamera(
+                        CameraUpdateFactory.newLatLngZoom(
+                            myLocationMarker.position,
+                            17.0f
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    private fun observeSuggestedDestinations() {
+        viewModel.suggestedDestinations.observe(this, Observer { suggestedDestinations ->
+            searchBar.updateLastSuggestions(suggestedDestinations)
+        })
     }
 }
