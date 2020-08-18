@@ -9,7 +9,7 @@ import kotlinx.android.synthetic.main.popup.view.*
 
 enum class PopupAction {
     ACCEPT,
-    DENI
+    DENY
 }
 
 class PopupView(context: Context) : FrameLayout(context) {
@@ -36,7 +36,7 @@ class PopupView(context: Context) : FrameLayout(context) {
 
     fun setCallback(onAction: (PopupAction) -> Unit): PopupView {
         popup_accept.setOnClickListener { onAction(PopupAction.ACCEPT) }
-        popup_deni.setOnClickListener { onAction(PopupAction.DENI) }
+        popup_deni.setOnClickListener { onAction(PopupAction.DENY) }
 
         return this
     }

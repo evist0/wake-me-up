@@ -1,8 +1,6 @@
 package com.pampam.wakemeup.ui
 
 import android.Manifest
-import android.animation.ObjectAnimator
-import android.animation.ValueAnimator
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -15,7 +13,6 @@ import android.provider.Settings
 import android.util.Log
 import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.animation.doOnEnd
 import androidx.core.app.ActivityCompat
 import androidx.core.view.marginBottom
 import androidx.core.view.marginEnd
@@ -25,18 +22,14 @@ import androidx.lifecycle.Observer
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.Marker
-import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.snackbar.Snackbar
 import com.pampam.wakemeup.BuildConfig
 import com.pampam.wakemeup.R
 import com.pampam.wakemeup.data.MyLocationService
 import com.pampam.wakemeup.databinding.ActivityMainBinding
-import com.pampam.wakemeup.ui.animation.LatLngEvaluator
+import com.pampam.wakemeup.ui.animation.LocationMarker
 import kotlinx.android.synthetic.main.activity_main.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
-
 
 private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
 
@@ -66,8 +59,7 @@ class MainActivity : AppCompatActivity() {
     private val viewModel by viewModel<MainActivityViewModel>()
 
     private lateinit var map: GoogleMap
-    private lateinit var myLocationMarker: Marker
-    private lateinit var myLocationMarkerAnimator: ValueAnimator
+    private lateinit var myLocationMarker: LocationMarker
 
     private lateinit var locationAvailabilityPopUp: PopupView
     private lateinit var locationAvailabilitySnackbar: Snackbar
@@ -108,7 +100,7 @@ class MainActivity : AppCompatActivity() {
                 if (viewModel.isFocused.value == true) {
                     map.animateCamera(
                         CameraUpdateFactory.newLatLngZoom(
-                            myLocationMarker.position,
+                            myLocationMarker.getLocation(),
                             17.0f
                         )
                     )
@@ -126,7 +118,7 @@ class MainActivity : AppCompatActivity() {
                             locationAvailabilityPopUp.hide()
                         }
 
-                        PopupAction.DENI -> {
+                        PopupAction.DENY -> {
                             locationAvailabilityPopUp.hide()
                         }
                     }
@@ -160,36 +152,19 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            myLocationMarker =
-                map.addMarker(MarkerOptions().position(LatLng(0.0, 0.0)).visible(false))
-
+            myLocationMarker = LocationMarker(map, this)
             viewModel.myLastLocation.observe(this, Observer { location ->
                 if (location != null) {
                     if (location.latLng != null) {
-                        myLocationMarkerAnimator =
-                            ObjectAnimator.ofObject(
-                                LatLngEvaluator,
-                                myLocationMarker.position,
-                                location.latLng
-                            ).apply {
-                                duration = if (location.status.isAvailable()) 0 else 1000
-                                addUpdateListener {
-                                    myLocationMarker.apply {
-                                        position = it.animatedValue as LatLng
-                                        isVisible = true
-                                    }
-                                }
-                                doOnEnd {
-                                    if (viewModel.isFocused.value == true) {
-                                        map.animateCamera(
-                                            CameraUpdateFactory.newLatLng(
-                                                myLocationMarker.position
-                                            )
-                                        )
-                                    }
-                                }
-                                start()
+                        myLocationMarker.setLocation(location) {
+                            if (viewModel.isFocused.value == true) {
+                                map.animateCamera(
+                                    CameraUpdateFactory.newLatLng(
+                                        myLocationMarker.getLocation()
+                                    )
+                                )
                             }
+                        }
                     }
 
                     if (location.status.isAvailable()) {
