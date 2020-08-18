@@ -1,8 +1,6 @@
 package com.pampam.wakemeup.ui
 
 import android.Manifest
-import android.animation.ObjectAnimator
-import android.animation.ValueAnimator
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -27,19 +25,15 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.Marker
-import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.snackbar.Snackbar
 import com.mancj.materialsearchbar.MaterialSearchBar.OnSearchActionListener
 import com.pampam.wakemeup.BuildConfig
 import com.pampam.wakemeup.R
 import com.pampam.wakemeup.data.MyLocationService
 import com.pampam.wakemeup.databinding.ActivityMainBinding
-import com.pampam.wakemeup.ui.animation.LatLngEvaluator
+import com.pampam.wakemeup.ui.animation.LocationMarker
 import kotlinx.android.synthetic.main.activity_main.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
-
 
 private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
 
@@ -69,8 +63,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
     private val viewModel by viewModel<MainActivityViewModel>()
 
     private lateinit var map: GoogleMap
-    private lateinit var myLocationMarker: Marker
-    private lateinit var myLocationMarkerAnimator: ValueAnimator
+    private lateinit var myLocationMarker: LocationMarker
 
     private lateinit var locationAvailabilityPopUp: PopupView
     private lateinit var locationAvailabilitySnackbar: Snackbar
