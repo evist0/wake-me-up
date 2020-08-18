@@ -14,7 +14,6 @@ import android.util.Log
 import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintSet
-import androidx.core.animation.doOnEnd
 import androidx.core.app.ActivityCompat
 import androidx.core.view.marginEnd
 import androidx.core.view.marginStart
@@ -270,30 +269,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         viewModel.myLastLocation.observe(this, Observer { location ->
             if (location != null) {
                 if (location.latLng != null) {
-                    myLocationMarkerAnimator =
-                        ObjectAnimator.ofObject(
-                            LatLngEvaluator,
-                            myLocationMarker.position,
-                            location.latLng
-                        ).apply {
-                            duration = if (location.status.isAvailable()) 0 else 1000
-                            addUpdateListener {
-                                myLocationMarker.apply {
-                                    position = it.animatedValue as LatLng
-                                    isVisible = true
-                                }
-                            }
-                            doOnEnd {
-                                if (viewModel.isFocused.value == true) {
-                                    map.animateCamera(
-                                        CameraUpdateFactory.newLatLng(
-                                            myLocationMarker.position
-                                        )
-                                    )
-                                }
-                            }
-                            start()
+                    myLocationMarker.setLocation(location) {
+                        if (viewModel.isFocused.value == true) {
+                            map.animateCamera(
+                                CameraUpdateFactory.newLatLng(
+                                    myLocationMarker.getLocation()
+                                )
+                            )
                         }
+                    }
                 }
 
                 if (location.status.isAvailable()) {
@@ -306,8 +290,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
     }
 
     private fun initMyLocationMarker() {
-        myLocationMarker =
-            map.addMarker(MarkerOptions().position(LatLng(0.0, 0.0)).visible(false))
+        myLocationMarker = LocationMarker(map, this)
     }
 
     private fun initMapAsync() {
@@ -335,7 +318,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                             locationAvailabilityPopUp.hide()
                         }
 
-                        PopupAction.DENI -> {
+                        PopupAction.DENY -> {
                             locationAvailabilityPopUp.hide()
                         }
                     }
@@ -359,7 +342,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                 if (viewModel.isFocused.value == true) {
                     map.animateCamera(
                         CameraUpdateFactory.newLatLngZoom(
-                            myLocationMarker.position,
+                            myLocationMarker.getLocation(),
                             17.0f
                         )
                     )

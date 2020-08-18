@@ -16,6 +16,7 @@ import com.google.android.gms.maps.model.MarkerOptions
 import com.pampam.wakemeup.R
 import com.pampam.wakemeup.data.MyLocationService
 import com.pampam.wakemeup.data.model.Location
+import com.pampam.wakemeup.data.model.LocationStatus
 import kotlin.math.PI
 import kotlin.math.atan2
 
@@ -71,7 +72,7 @@ class LocationMarker(private val map: GoogleMap, private val context: Context) {
         }
 
         ObjectAnimator.ofObject(LatLngEvaluator, marker.position, newLocation.latLng).apply {
-            duration = if (newLocation.status.isAvailable()) 0 else 1000
+            duration = if (newLocation.status == LocationStatus.FirstAvailable) 0 else 1000
             addUpdateListener {
                 marker.apply {
                     position = it.animatedValue as LatLng
