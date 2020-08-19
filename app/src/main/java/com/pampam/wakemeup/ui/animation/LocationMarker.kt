@@ -8,6 +8,7 @@ import android.graphics.Color
 import android.os.CountDownTimer
 import android.util.Log
 import androidx.core.animation.doOnEnd
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
@@ -17,21 +18,15 @@ import com.pampam.wakemeup.R
 import com.pampam.wakemeup.data.MyLocationService
 import com.pampam.wakemeup.data.model.Location
 import com.pampam.wakemeup.data.model.LocationStatus
+import com.pampam.wakemeup.data.model.MovingStatus
+import com.pampam.wakemeup.ui.MainActivityViewModel
 import kotlin.math.PI
 import kotlin.math.atan2
 
-class LocationMarker(private val map: GoogleMap, private val context: Context) {
+class MovingDisabler(private val locationMarker: LocationMarker, private val timeout: Long) {
+    private var isActive = false
 
-    private var marker: Marker
-
-    private var mRotation = 0.0f
-
-    private var isMoving = false
-    private var isOnline = false
-
-    private var isMovingDisablerActive = false
-    private var isMovingDisabler = object : CountDownTimer(6000, 1000) {
-
+    private val countDownTimer = object : CountDownTimer(timeout, 1000) {
         override fun onTick(p0: Long) {
             Log.d(
                 MyLocationService::class.simpleName,
@@ -40,88 +35,154 @@ class LocationMarker(private val map: GoogleMap, private val context: Context) {
         }
 
         override fun onFinish() {
-            isMoving = false
-            redraw()
+            locationMarker.movingStatus = MovingStatus.Standing
+            isActive = false
         }
     }
 
-    private lateinit var movingBitmap: Bitmap
-    private lateinit var stayBitmap: Bitmap
+    fun update() {
+        if(!isActive) {
+            countDownTimer.start()
+        } else {
+            countDownTimer.cancel()
+            countDownTimer.start()
+        }
+    }
+}
+
+class LocationMarker(
+    private val map: GoogleMap,
+    private val context: Context,
+    private val viewModel: MainActivityViewModel
+) {
+
+    private var marker: Marker
+
+    var location: Location = Location(LocationStatus.Unavailable, LatLng(0.0, 0.0))
+        get() = Location(
+            locationStatus,
+            marker.position
+        )
+        set(newLocation) {
+
+            locationStatus = newLocation.status
+
+            if (field != newLocation && locationStatus.isAvailable()) {
+
+                //Don't move for the first time
+                if(locationStatus != LocationStatus.FirstAvailable) {
+                    movingStatus = MovingStatus.Moving
+                }
+
+                val lngDifference = newLocation.latLng!!.longitude - location.latLng!!.longitude
+                val latDifference = newLocation.latLng.latitude - location.latLng!!.latitude
+
+                val newRotation = (atan2(lngDifference, latDifference) * 180 / PI).toFloat()
+
+                ObjectAnimator.ofObject(FloatEvaluator, marker.rotation, newRotation).apply {
+                    duration = if (newLocation.status == LocationStatus.FirstAvailable) 0 else 1000
+
+                    addUpdateListener {
+                        marker.rotation = it.animatedValue as Float
+                    }
+
+                    start()
+                }
+                ObjectAnimator.ofObject(LatLngEvaluator, marker.position, newLocation.latLng).apply {
+                        duration =
+                            if (newLocation.status == LocationStatus.FirstAvailable) 0 else 1000
+
+                        addUpdateListener {
+                            marker.apply {
+                                position = it.animatedValue as LatLng
+                                isVisible = true
+                            }
+                        }
+
+                        doOnEnd {
+                            if (viewModel.isFocused.value == true) {
+                                map.animateCamera(CameraUpdateFactory.newLatLng(location.latLng))
+                            }
+
+                        }
+
+                        start()
+                    }
+
+                field = newLocation
+            }
+        }
+
+    private var locationStatus = LocationStatus.Unavailable
+        set(newStatus) {
+            //Offline -> Online
+            if (!field.isAvailable() && newStatus.isAvailable()) {
+                currentColor = primaryColor
+            }
+
+            //Online -> Offline
+            if (field.isAvailable() && !newStatus.isAvailable()) {
+                currentColor = neutralColor
+            }
+
+            if (field != newStatus) {
+                field = newStatus
+                redraw()
+            }
+        }
+
+    var movingStatus: MovingStatus = MovingStatus.Standing
+        set(newStatus) {
+
+            if(newStatus == MovingStatus.Moving) {
+                movingDisabler.update()
+            }
+
+            //Stay -> Move
+            if (!movingStatus.isMoving() && newStatus.isMoving()) {
+                currentBitmap = movingBitmap
+            }
+
+            //Move -> Stay
+            if (movingStatus.isMoving() && !newStatus.isMoving()) {
+                currentBitmap = standingBitmap
+            }
+
+            if (field != newStatus) {
+                field = newStatus
+                redraw()
+            }
+        }
+
+    private var movingDisabler = MovingDisabler(this, 6000)
+
+    private var currentBitmap: Bitmap
+    private var currentColor: Int
+
+    private var movingBitmap: Bitmap
+    private var standingBitmap: Bitmap
 
     private var primaryColor = context.getColor(R.color.colorPrimary)
     private var neutralColor = context.getColor(R.color.colorText_neutral)
 
     init {
         movingBitmap = initMarkerBitmap(R.drawable.moving)
-        stayBitmap = initMarkerBitmap(R.drawable.stay)
+        standingBitmap = initMarkerBitmap(R.drawable.stay)
+
+        currentColor = neutralColor
+        currentBitmap = replaceColor(standingBitmap, currentColor);
 
         marker = map.addMarker(MarkerOptions().apply {
             position(LatLng(0.0, 0.0))
+            icon(BitmapDescriptorFactory.fromBitmap(currentBitmap))
             visible(false)
         })
     }
 
-    fun setLocation(newLocation: Location, onAnimEnd: () -> Unit) {
-
-        if (isOnline != newLocation.status.isAvailable()) {
-            isOnline = newLocation.status.isAvailable()
-            redraw()
-        }
-        if (marker.position != newLocation.latLng && newLocation.latLng != null) {
-            calculateMove(marker.position, newLocation.latLng)
-        }
-
-        ObjectAnimator.ofObject(LatLngEvaluator, marker.position, newLocation.latLng).apply {
-            duration = if (newLocation.status == LocationStatus.FirstAvailable) 0 else 1000
-            addUpdateListener {
-                marker.apply {
-                    position = it.animatedValue as LatLng
-                    isVisible = true
-                }
-            }
-            doOnEnd {
-                onAnimEnd()
-            }
-            start()
-        }
-    }
-
-    fun getLocation(): LatLng {
-        return marker.position
-    }
-
-    private fun calculateMove(oldPosition: LatLng, newPosition: LatLng) {
-        isMoving = true
-
-        if (isMovingDisablerActive) {
-            isMovingDisabler.cancel()
-            isMovingDisablerActive = false
-        }
-
-        val lngDifference = newPosition.longitude - oldPosition.longitude
-        val latDifference = newPosition.latitude - oldPosition.latitude
-
-        val arcth = atan2(lngDifference, latDifference)
-        mRotation = (arcth * 180 / PI).toFloat()
-
-        redraw()
-
-        isMovingDisabler.start()
-        isMovingDisablerActive = true
-    }
-
     private fun redraw() {
-        var newMarker = if (isMoving) movingBitmap else stayBitmap
-        newMarker = if (isOnline) replaceColor(newMarker, primaryColor) else replaceColor(
-            newMarker,
-            neutralColor
-        )
-
         marker.apply {
-            setIcon(BitmapDescriptorFactory.fromBitmap(newMarker))
-            rotation = mRotation
+            setIcon(BitmapDescriptorFactory.fromBitmap(replaceColor(currentBitmap, currentColor)))
         }
-
     }
 
     private fun initMarkerBitmap(icon: Int): Bitmap {

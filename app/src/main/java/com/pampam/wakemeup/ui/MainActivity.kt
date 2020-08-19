@@ -269,15 +269,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         viewModel.myLastLocation.observe(this, Observer { location ->
             if (location != null) {
                 if (location.latLng != null) {
-                    myLocationMarker.setLocation(location) {
-                        if (viewModel.isFocused.value == true) {
-                            map.animateCamera(
-                                CameraUpdateFactory.newLatLng(
-                                    myLocationMarker.getLocation()
-                                )
-                            )
-                        }
-                    }
+                    myLocationMarker.location = location
                 }
 
                 if (location.status.isAvailable()) {
@@ -290,7 +282,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
     }
 
     private fun initMyLocationMarker() {
-        myLocationMarker = LocationMarker(map, this)
+        myLocationMarker = LocationMarker(map, this, viewModel)
     }
 
     private fun initMapAsync() {
@@ -342,7 +334,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                 if (viewModel.isFocused.value == true) {
                     map.animateCamera(
                         CameraUpdateFactory.newLatLngZoom(
-                            myLocationMarker.getLocation(),
+                            myLocationMarker.location.latLng,
                             17.0f
                         )
                     )
