@@ -23,6 +23,9 @@ import com.pampam.wakemeup.ui.MainActivityViewModel
 import kotlin.math.PI
 import kotlin.math.atan2
 
+// ревью кода https://www.youtube.com/watch?v=dQw4w9WgXcQ
+// исправь всё с учетом того что я сказал
+
 class MovingDisabler(private val locationMarker: LocationMarker, private val timeout: Long) {
     private var isActive = false
 
@@ -170,7 +173,7 @@ class LocationMarker(
         standingBitmap = initMarkerBitmap(R.drawable.stay)
 
         currentColor = neutralColor
-        currentBitmap = replaceColor(standingBitmap, currentColor);
+        currentBitmap = replaceColor(standingBitmap, currentColor)
 
         marker = map.addMarker(MarkerOptions().apply {
             position(LatLng(0.0, 0.0))
