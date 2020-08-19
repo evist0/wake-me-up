@@ -79,7 +79,7 @@ class LocationMarker(
 
                 val newRotation = (atan2(lngDifference, latDifference) * 180 / PI).toFloat()
 
-                ObjectAnimator.ofObject(FloatEvaluator, marker.rotation, newRotation).apply {
+                ObjectAnimator.ofObject(RotationEvaluator, marker.rotation, newRotation).apply {
                     duration = if (newLocation.status == LocationStatus.FirstAvailable) 0 else 1000
 
                     addUpdateListener {
