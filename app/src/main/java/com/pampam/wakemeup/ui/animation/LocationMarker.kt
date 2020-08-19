@@ -24,9 +24,6 @@ import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.atan2
 
-// ревью кода https://www.youtube.com/watch?v=dQw4w9WgXcQ
-// исправь всё с учетом того что я сказал
-
 class MovingDisabler(private val locationMarker: LocationMarker, private val timeout: Long) {
     private var isActive = false
 
