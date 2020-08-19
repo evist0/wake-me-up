@@ -21,6 +21,7 @@ import com.pampam.wakemeup.data.model.LocationStatus
 import com.pampam.wakemeup.data.model.MovingStatus
 import com.pampam.wakemeup.ui.MainActivityViewModel
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.atan2
 
 class MovingDisabler(private val locationMarker: LocationMarker, private val timeout: Long) {
@@ -28,10 +29,6 @@ class MovingDisabler(private val locationMarker: LocationMarker, private val tim
 
     private val countDownTimer = object : CountDownTimer(timeout, 1000) {
         override fun onTick(p0: Long) {
-            Log.d(
-                MyLocationService::class.simpleName,
-                "Milliseconds remaining until isMoving became false: $p0"
-            )
         }
 
         override fun onFinish() {
@@ -77,7 +74,10 @@ class LocationMarker(
                 val lngDifference = newLocation.latLng!!.longitude - location.latLng!!.longitude
                 val latDifference = newLocation.latLng.latitude - location.latLng!!.latitude
 
-                val newRotation = (atan2(lngDifference, latDifference) * 180 / PI).toFloat()
+                var newRotation = (atan2(lngDifference, latDifference) * 180 / PI).toFloat()
+
+                newRotation = if(newRotation < 0) 360 + newRotation else newRotation
+                newRotation %= 360
 
                 ObjectAnimator.ofObject(RotationEvaluator, marker.rotation, newRotation).apply {
                     duration = if (newLocation.status == LocationStatus.FirstAvailable) 0 else 1000
