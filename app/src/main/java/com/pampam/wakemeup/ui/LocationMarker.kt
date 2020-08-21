@@ -76,10 +76,7 @@ class LocationMarker(
                 val lngDifference = newLocation.latLng!!.longitude - location.latLng!!.longitude
                 val latDifference = newLocation.latLng.latitude - location.latLng!!.latitude
 
-                var newRotation = (atan2(lngDifference, latDifference) * 180 / PI).toFloat()
-
-                newRotation = if (newRotation < 0) 360 + newRotation else newRotation
-                newRotation %= 360
+                val newRotation = atan2(lngDifference, latDifference) * 180 / PI
 
                 ObjectAnimator.ofObject(RotationEvaluator, marker.rotation, newRotation).apply {
                     duration = if (newLocation.status == LocationStatus.FirstAvailable) 0 else 1000
@@ -131,7 +128,7 @@ class LocationMarker(
             }
         }
 
-    private var movingDisabler =
+    private val movingDisabler =
         MovingDisabler(this, 6000)
 
     private fun redraw() {
