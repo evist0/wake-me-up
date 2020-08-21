@@ -18,7 +18,7 @@ object RotationEvaluator : TypeEvaluator<Float> {
         val theta = acos(dot) * w
         var relativeX = cos(y) - cos(x) * dot
         var relativeY = sin(y) - sin(x) * dot
-        val relativeAbs = sqrt(relativeX * relativeX + relativeY * relativeY)
+        val relativeAbs = hypot(relativeX, relativeY)
         relativeX /= relativeAbs
         relativeY /= relativeAbs
 

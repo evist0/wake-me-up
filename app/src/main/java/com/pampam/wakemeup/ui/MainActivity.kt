@@ -299,14 +299,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
             standingOffline = decodeScaledBitmap(R.drawable.standing_offline)
         )
 
-        myLocationMarker = LocationMarker(
-            map,
-            myLocationMarkerResources
-        ) { newLocation ->
-            if (viewModel.isFocused.value == true) {
-                map.animateCamera(CameraUpdateFactory.newLatLng(newLocation))
+        myLocationMarker =
+            map.addLocationMarker(myLocationMarkerResources, 6000, 0.000005) { newLocation ->
+                if (viewModel.isFocused.value == true) {
+                    map.animateCamera(CameraUpdateFactory.newLatLng(newLocation))
+                }
             }
-        }
     }
 
     private fun initMapAsync() {

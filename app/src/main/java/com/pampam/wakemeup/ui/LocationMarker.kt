@@ -11,34 +11,11 @@ import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.pampam.wakemeup.data.model.Location
 import com.pampam.wakemeup.data.model.LocationStatus
-import com.pampam.wakemeup.data.model.MovingStatus
 import com.pampam.wakemeup.ui.animation.LatLngEvaluator
 import com.pampam.wakemeup.ui.animation.RotationEvaluator
 import kotlin.math.PI
 import kotlin.math.atan2
-
-class MovingDisabler(private val locationMarker: LocationMarker, private val timeout: Long) {
-    private var isActive = false
-
-    private val countDownTimer = object : CountDownTimer(timeout, 1000) {
-        override fun onTick(p0: Long) {
-        }
-
-        override fun onFinish() {
-            locationMarker.movingStatus = MovingStatus.Standing
-            isActive = false
-        }
-    }
-
-    fun update() {
-        if (!isActive) {
-            countDownTimer.start()
-        } else {
-            countDownTimer.cancel()
-            countDownTimer.start()
-        }
-    }
-}
+import kotlin.math.hypot
 
 data class LocationMarkerResources(
     val movingOnline: Bitmap,
@@ -48,16 +25,12 @@ data class LocationMarkerResources(
 )
 
 class LocationMarker(
-    map: GoogleMap,
+    private val marker: Marker,
     private val resources: LocationMarkerResources,
-    private val onMoveEnd: (newLocation: LatLng) -> Unit
+    movementTimeout: Long,
+    private val movementEpsilon: Double,
+    private val onMoveAnimationEnd: (newLocation: LatLng) -> Unit
 ) {
-
-    private var marker: Marker = map.addMarker(MarkerOptions().apply {
-        position(LatLng(0.0, 0.0))
-        icon(BitmapDescriptorFactory.fromBitmap(resources.standingOffline))
-        visible(false)
-    })
 
     var location: Location = Location(LocationStatus.Unavailable, LatLng(0.0, 0.0))
         get() = Location(
@@ -69,15 +42,18 @@ class LocationMarker(
             locationStatus = newLocation.status
 
             if (field != newLocation && locationStatus.isAvailable()) {
-                if (locationStatus != LocationStatus.FirstAvailable) {
-                    movingStatus = MovingStatus.Moving
+
+                val oldLatLng = location.latLng!!
+                val newLatLng = newLocation.latLng!!
+                val lngDifference = newLatLng.longitude - oldLatLng.longitude
+                val latDifference = newLatLng.latitude - oldLatLng.latitude
+
+                val movement = hypot(lngDifference, latDifference)
+                if (locationStatus != LocationStatus.FirstAvailable && movement > movementEpsilon) {
+                    movementStatus = MovementStatus.Moving
                 }
 
-                val lngDifference = newLocation.latLng!!.longitude - location.latLng!!.longitude
-                val latDifference = newLocation.latLng.latitude - location.latLng!!.latitude
-
                 val newRotation = atan2(lngDifference, latDifference) * 180 / PI
-
                 ObjectAnimator.ofObject(RotationEvaluator, marker.rotation, newRotation).apply {
                     duration = if (newLocation.status == LocationStatus.FirstAvailable) 0 else 1000
 
@@ -99,7 +75,7 @@ class LocationMarker(
                             }
                         }
                         doOnEnd {
-                            onMoveEnd(newLocation.latLng)
+                            onMoveAnimationEnd(newLocation.latLng)
                         }
                         start()
                     }
@@ -112,37 +88,83 @@ class LocationMarker(
         set(newStatus) {
             if (field != newStatus) {
                 field = newStatus
-                redraw()
+                invalidateIcon()
             }
         }
 
-    var movingStatus: MovingStatus = MovingStatus.Standing
+    private enum class MovementStatus {
+        Standing,
+        Moving
+    }
+
+    private var movementStatus: MovementStatus = MovementStatus.Standing
         set(newStatus) {
-            if (newStatus == MovingStatus.Moving) {
-                movingDisabler.update()
+            if (newStatus == MovementStatus.Moving) {
+                movementSentry.update()
             }
 
             if (field != newStatus) {
                 field = newStatus
-                redraw()
+                invalidateIcon()
             }
         }
 
-    private val movingDisabler =
-        MovingDisabler(this, 6000)
+    private inner class MovementSentry(private val timeout: Long) {
 
-    private fun redraw() {
-        val icon = when (Pair(locationStatus.isAvailable(), movingStatus.isMoving())) {
-            Pair(first = true, second = true) -> resources.movingOnline
-            Pair(first = true, second = false) -> resources.standingOnline
-            Pair(first = false, second = true) -> resources.movingOffline
-            Pair(first = false, second = false) -> resources.standingOffline
+        private var isActive = false
 
-            else -> throw Exception("Icon 101")
+        private val countDownTimer = object : CountDownTimer(timeout, 1000) {
+            override fun onTick(tick: Long) {
+            }
+
+            override fun onFinish() {
+                movementStatus = MovementStatus.Standing
+                isActive = false
+            }
         }
 
-        marker.apply {
-            setIcon(BitmapDescriptorFactory.fromBitmap(icon))
+        fun update() {
+            if (!isActive) {
+                countDownTimer.start()
+            } else {
+                countDownTimer.cancel()
+                countDownTimer.start()
+            }
         }
     }
+
+    private val movementSentry = MovementSentry(movementTimeout)
+
+    private fun invalidateIcon() {
+
+        val icon = when (locationStatus) {
+            LocationStatus.Unavailable -> when (movementStatus) {
+                MovementStatus.Standing -> resources.standingOffline
+                MovementStatus.Moving -> resources.movingOffline
+            }
+            LocationStatus.FirstAvailable, LocationStatus.Available -> when (movementStatus) {
+                MovementStatus.Standing -> resources.standingOnline
+                MovementStatus.Moving -> resources.movingOnline
+            }
+        }
+
+        marker.setIcon(BitmapDescriptorFactory.fromBitmap(icon))
+    }
+}
+
+fun GoogleMap.addLocationMarker(
+    resources: LocationMarkerResources,
+    movementTimeout: Long,
+    movementEpsilon: Double,
+    onMoveAnimationEnd: (newLocation: LatLng) -> Unit
+): LocationMarker {
+
+    val marker = addMarker(MarkerOptions().apply {
+        flat(true)
+        position(LatLng(0.0, 0.0))
+        icon(BitmapDescriptorFactory.fromBitmap(resources.standingOffline))
+        visible(false)
+    })
+
+    return LocationMarker(marker, resources, movementTimeout, movementEpsilon, onMoveAnimationEnd)
 }
