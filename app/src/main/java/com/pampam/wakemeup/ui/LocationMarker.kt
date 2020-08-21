@@ -9,13 +9,13 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.maps.android.SphericalUtil
 import com.pampam.wakemeup.data.model.Location
 import com.pampam.wakemeup.data.model.LocationStatus
 import com.pampam.wakemeup.ui.animation.LatLngEvaluator
 import com.pampam.wakemeup.ui.animation.RotationEvaluator
 import kotlin.math.PI
 import kotlin.math.atan2
-import kotlin.math.hypot
 
 data class LocationMarkerResources(
     val movingOnline: Bitmap,
@@ -48,7 +48,7 @@ class LocationMarker(
                 val lngDifference = newLatLng.longitude - oldLatLng.longitude
                 val latDifference = newLatLng.latitude - oldLatLng.latitude
 
-                val movement = hypot(lngDifference, latDifference)
+                val movement = SphericalUtil.computeDistanceBetween(oldLatLng, newLatLng)
                 if (locationStatus != LocationStatus.FirstAvailable && movement > movementEpsilon) {
                     movementStatus = MovementStatus.Moving
                 }

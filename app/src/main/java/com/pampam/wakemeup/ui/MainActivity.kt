@@ -299,7 +299,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         )
 
         myLocationMarker =
-            map.addLocationMarker(myLocationMarkerResources, 6000, 0.000005) { newLocation ->
+            map.addLocationMarker(myLocationMarkerResources, 6000, 10.0) { newLocation ->
                 if (viewModel.isFocused.value == true) {
                     map.animateCamera(CameraUpdateFactory.newLatLng(newLocation))
                 }
