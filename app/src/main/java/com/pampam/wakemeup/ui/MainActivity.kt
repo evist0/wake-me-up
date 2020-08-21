@@ -6,6 +6,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.os.IBinder
@@ -30,7 +32,6 @@ import com.pampam.wakemeup.BuildConfig
 import com.pampam.wakemeup.R
 import com.pampam.wakemeup.data.MyLocationService
 import com.pampam.wakemeup.databinding.ActivityMainBinding
-import com.pampam.wakemeup.ui.animation.LocationMarker
 import kotlinx.android.synthetic.main.activity_main.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -282,7 +283,30 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
     }
 
     private fun initMyLocationMarker() {
-        myLocationMarker = LocationMarker(map, this, viewModel)
+        fun decodeScaledBitmap(id: Int): Bitmap {
+            return Bitmap.createScaledBitmap(
+                BitmapFactory.decodeResource(
+                    resources,
+                    id
+                ), 64, 64, true
+            )
+        }
+
+        val myLocationMarkerResources = LocationMarkerResources(
+            movingOnline = decodeScaledBitmap(R.drawable.moving_online),
+            standingOnline = decodeScaledBitmap(R.drawable.standing_online),
+            movingOffline = decodeScaledBitmap(R.drawable.moving_offline),
+            standingOffline = decodeScaledBitmap(R.drawable.standing_offline)
+        )
+
+        myLocationMarker = LocationMarker(
+            map,
+            myLocationMarkerResources
+        ) { newLocation ->
+            if (viewModel.isFocused.value == true) {
+                map.animateCamera(CameraUpdateFactory.newLatLng(newLocation))
+            }
+        }
     }
 
     private fun initMapAsync() {
