@@ -26,14 +26,14 @@ class MainActivityViewModel(
     val suggestedDestinations: LiveData<List<Destination>> = _suggestedDestinations
 
     fun onSearchBegin() {
-
-        autocompleteSession = destinationRepository.newAutocompleteSession().apply {
-            _suggestedDestinations.addSource(autocompletionLiveData) { currentSuggestions ->
-                if (currentSuggestions != _suggestedDestinations.value) {
-                    _suggestedDestinations.value = currentSuggestions
+        autocompleteSession =
+            destinationRepository.newAutocompleteSession(myLastLocation.value?.latLng).apply {
+                _suggestedDestinations.addSource(autocompletionLiveData) { currentSuggestions ->
+                    if (currentSuggestions != _suggestedDestinations.value) {
+                        _suggestedDestinations.value = currentSuggestions
+                    }
                 }
             }
-        }
 
         destinationSearchQuery.observeForever(destinationSearchQueryObserver)
     }

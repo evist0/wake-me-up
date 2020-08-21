@@ -86,7 +86,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         initMapAsync()
 
         observeSuggestedDestinations()
-
     }
 
     private fun adjustControlLayoutTranslucentMargins() {

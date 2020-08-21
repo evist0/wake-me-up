@@ -2,6 +2,7 @@ package com.pampam.wakemeup
 
 import android.app.Application
 import androidx.room.Room
+import com.google.android.libraries.places.api.Places
 import com.pampam.wakemeup.data.DestinationRepository
 import com.pampam.wakemeup.data.MyLocationRepository
 import com.pampam.wakemeup.data.db.AppDatabase
@@ -15,6 +16,8 @@ class Application : Application() {
     override fun onCreate() {
         super.onCreate()
 
+        Places.initialize(this, "AIzaSyB820LcGF2VZXUWcmteNEsw45Q_dt-WO6s")
+
         val appDatabase = Room.databaseBuilder(
             applicationContext,
             AppDatabase::class.java,
@@ -24,9 +27,10 @@ class Application : Application() {
         }.build()
 
         val appModule = module {
+            single { Places.createClient(this@Application) }
 
             single { appDatabase.getLastDestinationDao() }
-            single { DestinationRepository(get()) }
+            single { DestinationRepository(get(), get()) }
 
             single { MyLocationRepository() }
 
