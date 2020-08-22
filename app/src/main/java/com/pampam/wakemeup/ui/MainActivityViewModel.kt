@@ -12,7 +12,7 @@ class MainActivityViewModel(
 ) : ViewModel() {
 
     val myLastLocation: LiveData<Location> = myLocationRepository.myLastLocation
-    val hasLocationPermission = myLocationRepository.isListenToLocation
+    val listenToLocation = myLocationRepository.isListenToLocation
     val isFocused = MutableLiveData<Boolean>(false)
 
     val destinationSearchQuery = MutableLiveData<String>("")

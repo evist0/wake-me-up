@@ -116,7 +116,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         bindLocationService()
 
         if (foregroundPermissionApproved()) {
-            viewModel.hasLocationPermission.value = true
+            viewModel.listenToLocation.value = true
         } else {
             requestForegroundPermissions()
         }
@@ -125,7 +125,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
     override fun onStop() {
         super.onStop()
 
-        viewModel.hasLocationPermission.value = false
+        viewModel.listenToLocation.value = false
 
         if (locationServiceBound) {
             unbindService(locationServiceConnection)
@@ -183,7 +183,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                 }
 
                 grantResults[0] == PackageManager.PERMISSION_GRANTED -> {
-                    viewModel.hasLocationPermission.value = true
+                    viewModel.listenToLocation.value = true
                 }
 
                 else -> {
@@ -346,7 +346,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                         )
                     }
                 }
-            } else if (viewModel.hasLocationPermission.value == false) {
+            } else if (viewModel.listenToLocation.value == false) {
                 showLocationPermissionRequired()
             }
         }
