@@ -9,8 +9,8 @@ import androidx.room.Query
 @Dao
 interface RecentDestinationDao {
 
-    @Query("SELECT * FROM recentDestination")
-    fun getRecentDestinations(): LiveData<List<RecentDestinationEntity>>
+    @Query("SELECT * FROM recentDestination WHERE primaryText LIKE :query")
+    fun getRecentDestinations(query: String): LiveData<List<RecentDestinationEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertRecentDestination(recentDestinationEntity: RecentDestinationEntity)
