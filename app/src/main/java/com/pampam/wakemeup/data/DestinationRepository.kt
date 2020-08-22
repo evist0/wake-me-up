@@ -5,10 +5,11 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.model.AutocompleteSessionToken
-import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.api.model.RectangularBounds
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsResponse
 import com.google.android.libraries.places.api.net.PlacesClient
+import com.google.maps.android.SphericalUtil
 import com.pampam.wakemeup.data.db.RecentDestinationDao
 import com.pampam.wakemeup.data.db.RecentDestinationEntity
 import com.pampam.wakemeup.data.model.Destination
@@ -44,25 +45,30 @@ class DestinationRepository(
                 }
 
             val request =
-                FindAutocompletePredictionsRequest.builder()
-                    .setOrigin(origin)
-                    .setSessionToken(token)
-                    .setQuery(query)
-                    .build()
+                FindAutocompletePredictionsRequest.builder().apply {
+                    if (origin != null) {
+                        setOrigin(origin)
+                        val bias = RectangularBounds.newInstance(
+                            SphericalUtil.computeOffset(origin, 100_000.0, 225.0),
+                            SphericalUtil.computeOffset(origin, 100_000.0, 45.0)
+                        )
+                        setLocationBias(bias)
+                    }
+                    setSessionToken(token)
+                    setQuery(query)
 
+                }.build()
             placesClient.findAutocompletePredictions(request)
                 .addOnSuccessListener { response: FindAutocompletePredictionsResponse ->
                     Log.i("", response.toString())
                     val remoteDestinations = response.autocompletePredictions.sortedBy {
                         it.distanceMeters
-                    }.mapNotNull {
-                        if (it.placeTypes.contains(Place.Type.BUS_STATION)) {
-                            Destination(
-                                it.placeId,
-                                it.getPrimaryText(null).toString(),
-                                DestinationSource.Remote
-                            )
-                        } else null
+                    }.map {
+                        Destination(
+                            it.placeId,
+                            it.getPrimaryText(null).toString(),
+                            DestinationSource.Remote
+                        )
                     }
 
                     val autocompleteDestinations =
