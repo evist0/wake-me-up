@@ -1,8 +1,12 @@
 <resources>
     <string name="show_me">Покажи меня</string>
-    <string name="location_unavailable">Местоположение недоступно</string>
-    <string name="location_turn_on">Включить</string>
     <string name="notification_open">Открыть</string>
     <string name="notification_close">Отменить</string>
     <string name="notification_main_text">Мы вас разбудим!</string>
+    <string name="popup_accept_text">ОК</string>
+    <string name="popup_dismiss_text">Позже</string>
+    <string name="location_permission_title">Разрешение местоположения</string>
+    <string name="location_permission_message">Ваше местоположение необходимо приложению для функционирования</string>
+    <string name="location_unavailable_title">Местоположение недоступно</string>
+    <string name="location_unavailable_message">Ваше местоположение необходимо приложению для функционирования</string>
 </resources>

@@ -7,13 +7,13 @@ import com.pampam.wakemeup.data.model.Destination
 import com.pampam.wakemeup.data.model.Location
 
 class MainActivityViewModel(
-    private val myLocationRepository: MyLocationRepository,
+    myLocationRepository: MyLocationRepository,
     private val destinationRepository: DestinationRepository
 ) : ViewModel() {
 
     val myLastLocation: LiveData<Location> = myLocationRepository.myLastLocation
-    val isListenToLocation = myLocationRepository.isListenToLocation
-    val isFocused = MutableLiveData<Boolean>(true)
+    val hasLocationPermission = myLocationRepository.isListenToLocation
+    val isFocused = MutableLiveData<Boolean>(false)
 
     val destinationSearchQuery = MutableLiveData<String>("")
     private val destinationSearchQueryObserver = Observer<String> { query ->
@@ -36,10 +36,6 @@ class MainActivityViewModel(
             }
 
         destinationSearchQuery.observeForever(destinationSearchQueryObserver)
-    }
-
-    fun onSearchConfirmed(query: String) {
-
     }
 
     fun onSearchEnd() {

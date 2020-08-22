@@ -16,7 +16,7 @@ class Application : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        Places.initialize(this, "AIzaSyB820LcGF2VZXUWcmteNEsw45Q_dt-WO6s")
+        Places.initialize(this, getString(R.string.places_sdk_api_key))
 
         val appDatabase = Room.databaseBuilder(
             applicationContext,
@@ -28,7 +28,6 @@ class Application : Application() {
 
         val appModule = module {
             single { Places.createClient(this@Application) }
-
             single { appDatabase.getLastDestinationDao() }
             single { DestinationRepository(get(), get()) }
 

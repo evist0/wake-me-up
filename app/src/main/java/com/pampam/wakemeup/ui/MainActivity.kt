@@ -26,11 +26,11 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.material.snackbar.Snackbar
 import com.mancj.materialsearchbar.MaterialSearchBar.OnSearchActionListener
 import com.pampam.wakemeup.BuildConfig
 import com.pampam.wakemeup.R
 import com.pampam.wakemeup.data.MyLocationService
+import com.pampam.wakemeup.data.model.LocationStatus
 import com.pampam.wakemeup.databinding.ActivityMainBinding
 import kotlinx.android.synthetic.main.activity_main.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -65,9 +65,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
     private lateinit var map: GoogleMap
     private lateinit var myLocationMarker: LocationMarker
 
-    private lateinit var locationAvailabilityPopUp: PopupView
-    private lateinit var locationAvailabilitySnackbar: Snackbar
-    private lateinit var locationPermissionSnackbar: Snackbar
+    private lateinit var popupView: PopupView
 
     private var locationServiceBound = false
     private lateinit var locationServiceConnection: ServiceConnection
@@ -81,8 +79,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
 
         initMyLocationButton()
         initSearchBar()
-        initLocationAvailabilityPopup()
-        initLocationPermissionSnackbar()
+        initPopup()
         initMapAsync()
 
         observeSuggestedDestinations()
@@ -119,7 +116,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         bindLocationService()
 
         if (foregroundPermissionApproved()) {
-            viewModel.isListenToLocation.value = true
+            viewModel.hasLocationPermission.value = true
         } else {
             requestForegroundPermissions()
         }
@@ -128,7 +125,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
     override fun onStop() {
         super.onStop()
 
-        viewModel.isListenToLocation.value = false
+        viewModel.hasLocationPermission.value = false
 
         if (locationServiceBound) {
             unbindService(locationServiceConnection)
@@ -162,17 +159,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         val provideRationale = foregroundPermissionApproved()
 
         if (provideRationale) {
-            locationAvailabilitySnackbar
-                .setAction("Ok") {
-                    ActivityCompat.requestPermissions(
-                        this@MainActivity,
-                        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                        REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
-                    )
-                }
-                .show()
+            showLocationPermissionRequired()
         } else {
-            Log.d(MainActivity::class.simpleName, "Request foreground only permission")
             ActivityCompat.requestPermissions(
                 this@MainActivity,
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
@@ -195,24 +183,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                 }
 
                 grantResults[0] == PackageManager.PERMISSION_GRANTED -> {
-                    viewModel.isListenToLocation.value = true
+                    viewModel.hasLocationPermission.value = true
                 }
 
                 else -> {
-                    locationPermissionSnackbar
-                        .setAction("Settings") {
-                            val intent = Intent()
-                            intent.action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-                            val uri = Uri.fromParts(
-                                "package",
-                                BuildConfig.APPLICATION_ID,
-                                null
-                            )
-                            intent.data = uri
-                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                            startActivity(intent)
-                        }
-                        .show()
+                    showLocationPermissionRequired()
                 }
             }
         }
@@ -239,7 +214,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
     }
 
     override fun onSearchConfirmed(query: CharSequence?) {
-        viewModel.onSearchConfirmed(query.toString())
+
     }
 
     override fun onMapReady(it: GoogleMap) {
@@ -265,6 +240,36 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         observeMyLastLocation()
     }
 
+    private fun showLocationPermissionRequired() {
+        popupView.apply {
+            title = getString(R.string.location_permission_title)
+            message = getString(R.string.location_permission_message)
+            setOnAcceptClickListener {
+                val intent = Intent()
+                intent.action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                val uri = Uri.fromParts(
+                    "package",
+                    BuildConfig.APPLICATION_ID,
+                    null
+                )
+                intent.data = uri
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                startActivity(intent)
+            }
+        }.show()
+    }
+
+    private fun showLocationUnavailable() {
+        popupView.apply {
+            title = getString(R.string.location_unavailable_title)
+            message = getString(R.string.location_unavailable_message)
+            setOnAcceptClickListener {
+                val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                startActivity(intent)
+            }
+        }.show()
+    }
+
     private fun observeMyLastLocation() {
         viewModel.myLastLocation.observe(this, Observer { location ->
             if (location != null) {
@@ -272,10 +277,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                     myLocationMarker.location = location
                 }
 
-                if (location.status.isAvailable()) {
-                    locationAvailabilityPopUp.hide()
-                } else {
-                    locationAvailabilityPopUp.show(rootView)
+                if (!location.status.isAvailable()) {
+                    showLocationUnavailable()
                 }
             }
         })
@@ -312,30 +315,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         mapFragment.getMapAsync(this)
     }
 
-    private fun initLocationPermissionSnackbar() {
-        locationPermissionSnackbar = Snackbar.make(
-            mapFragmentView,
-            "Location permission required",
-            Snackbar.LENGTH_INDEFINITE
-        )
-    }
-
-    private fun initLocationAvailabilityPopup() {
-        locationAvailabilityPopUp =
-            PopupView(this).setTitle(getString(R.string.location_unavailable))
-                .setCallback { result ->
-                    when (result) {
-                        PopupAction.ACCEPT -> {
-                            val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                            startActivity(intent)
-                            locationAvailabilityPopUp.hide()
-                        }
-
-                        PopupAction.DENY -> {
-                            locationAvailabilityPopUp.hide()
-                        }
-                    }
-                }
+    private fun initPopup() {
+        popupView = PopupView(this)
+        rootView.addView(popupView)
     }
 
     private fun initSearchBar() {
@@ -350,16 +332,22 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         myLocationButton.setOnClickListener {
             val myLastLocation = viewModel.myLastLocation.value
             if (myLastLocation != null) {
-                viewModel.isFocused.value = !viewModel.isFocused.value!!
-
-                if (viewModel.isFocused.value == true) {
-                    map.animateCamera(
-                        CameraUpdateFactory.newLatLngZoom(
-                            myLocationMarker.location.latLng,
-                            17.0f
+                if (myLastLocation.status == LocationStatus.Unavailable) {
+                    showLocationUnavailable()
+                } else {
+                    popupView.dismiss()
+                    viewModel.isFocused.value = !viewModel.isFocused.value!!
+                    if (viewModel.isFocused.value == true) {
+                        map.animateCamera(
+                            CameraUpdateFactory.newLatLngZoom(
+                                myLocationMarker.location.latLng,
+                                17.0f
+                            )
                         )
-                    )
+                    }
                 }
+            } else if (viewModel.hasLocationPermission.value == false) {
+                showLocationPermissionRequired()
             }
         }
     }
