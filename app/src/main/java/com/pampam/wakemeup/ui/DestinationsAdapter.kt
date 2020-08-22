@@ -37,7 +37,8 @@ class DestinationsAdapter(layoutInflater: LayoutInflater) :
             }
         }
 
-        holder.itemView.text.text = suggestion.fullText
+        holder.itemView.primaryText.text = suggestion.primaryText
+        holder.itemView.secondaryText.text = suggestion.secondaryText
     }
 
     override fun getSingleViewHeight(): Int {

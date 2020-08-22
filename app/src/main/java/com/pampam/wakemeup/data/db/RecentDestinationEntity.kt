@@ -6,5 +6,6 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "recentDestination")
 data class RecentDestinationEntity(
     @PrimaryKey val placeId: String,
-    val fullText: String
+    val primaryText: String,
+    val secondaryText: String
 )

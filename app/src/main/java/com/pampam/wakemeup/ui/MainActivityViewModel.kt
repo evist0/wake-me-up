@@ -17,7 +17,7 @@ class MainActivityViewModel(
 
     val destinationSearchQuery = MutableLiveData<String>("")
     private val destinationSearchQueryObserver = Observer<String> { query ->
-        autocompleteSession?.updateQuery(query)
+        autocompleteSession?.updateQuery(myLastLocation.value?.latLng, query)
     }
 
     private var autocompleteSession: DestinationRepository.AutocompleteSession? = null
@@ -27,7 +27,7 @@ class MainActivityViewModel(
 
     fun onSearchBegin() {
         autocompleteSession =
-            destinationRepository.newAutocompleteSession(myLastLocation.value?.latLng).apply {
+            destinationRepository.newAutocompleteSession().apply {
                 _suggestedDestinations.addSource(autocompletionLiveData) { currentSuggestions ->
                     if (currentSuggestions != _suggestedDestinations.value) {
                         _suggestedDestinations.value = currentSuggestions
