@@ -79,6 +79,7 @@
                 app:mt_searchBarColor="@color/colorCard_0"
                 app:mt_searchIconTint="@color/colorIco_neutral"
                 app:mt_speechMode="false"
+                app:mt_suggestionsAnimationSpeed="200"
                 tools:visibility="visible">
 
             </com.mancj.materialsearchbar.MaterialSearchBar>
