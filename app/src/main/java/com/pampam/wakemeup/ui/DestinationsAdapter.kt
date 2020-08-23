@@ -6,12 +6,12 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.mancj.materialsearchbar.adapter.SuggestionsAdapter
 import com.pampam.wakemeup.R
-import com.pampam.wakemeup.data.model.Destination
-import com.pampam.wakemeup.data.model.DestinationSource
+import com.pampam.wakemeup.data.model.DestinationPrediction
+import com.pampam.wakemeup.data.model.DestinationPredictionSource
 import kotlinx.android.synthetic.main.item_destination.view.*
 
 class DestinationsAdapter(layoutInflater: LayoutInflater) :
-    SuggestionsAdapter<Destination, DestinationsAdapter.ViewHolder>(layoutInflater) {
+    SuggestionsAdapter<DestinationPrediction, DestinationsAdapter.ViewHolder>(layoutInflater) {
 
     inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view)
 
@@ -20,17 +20,17 @@ class DestinationsAdapter(layoutInflater: LayoutInflater) :
     }
 
     override fun onBindSuggestionHolder(
-        suggestion: Destination,
+        suggestion: DestinationPrediction,
         holder: ViewHolder,
         position: Int
     ) {
         when (suggestion.src) {
-            DestinationSource.Recent -> {
+            DestinationPredictionSource.Recent -> {
                 holder.itemView.recentImageView.visibility = View.VISIBLE
                 holder.itemView.remoteImageView.visibility = View.GONE
                 holder.itemView.deleteImageView.visibility = View.VISIBLE
             }
-            DestinationSource.Remote -> {
+            DestinationPredictionSource.Remote -> {
                 holder.itemView.remoteImageView.visibility = View.VISIBLE
                 holder.itemView.recentImageView.visibility = View.GONE
                 holder.itemView.deleteImageView.visibility = View.GONE

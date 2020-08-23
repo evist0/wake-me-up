@@ -10,8 +10,8 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.maps.android.SphericalUtil
-import com.pampam.wakemeup.data.model.Location
-import com.pampam.wakemeup.data.model.LocationStatus
+import com.pampam.wakemeup.data.model.MyLocation
+import com.pampam.wakemeup.data.model.MyLocationStatus
 import com.pampam.wakemeup.ui.animation.LatLngEvaluator
 import com.pampam.wakemeup.ui.animation.RotationEvaluator
 import kotlin.math.PI
@@ -32,8 +32,8 @@ class LocationMarker(
     private val onMoveAnimationEnd: (newLocation: LatLng) -> Unit
 ) {
 
-    var location: Location = Location(LocationStatus.Unavailable, LatLng(0.0, 0.0))
-        get() = Location(
+    var location: MyLocation = MyLocation(MyLocationStatus.Unavailable, LatLng(0.0, 0.0))
+        get() = MyLocation(
             locationStatus,
             marker.position
         )
@@ -49,13 +49,14 @@ class LocationMarker(
                 val latDifference = newLatLng.latitude - oldLatLng.latitude
 
                 val movement = SphericalUtil.computeDistanceBetween(oldLatLng, newLatLng)
-                if (locationStatus != LocationStatus.FirstAvailable && movement > movementEpsilon) {
+                if (locationStatus != MyLocationStatus.FirstAvailable && movement > movementEpsilon) {
                     movementStatus = MovementStatus.Moving
                 }
 
                 val newRotation = atan2(lngDifference, latDifference) * 180 / PI
                 ObjectAnimator.ofObject(RotationEvaluator, marker.rotation, newRotation).apply {
-                    duration = if (newLocation.status == LocationStatus.FirstAvailable) 0 else 1000
+                    duration =
+                        if (newLocation.status == MyLocationStatus.FirstAvailable) 0 else 1000
 
                     addUpdateListener {
                         marker.rotation = it.animatedValue as Float
@@ -66,7 +67,7 @@ class LocationMarker(
                 ObjectAnimator.ofObject(LatLngEvaluator, marker.position, newLocation.latLng)
                     .apply {
                         duration =
-                            if (newLocation.status == LocationStatus.FirstAvailable) 0 else 1000
+                            if (newLocation.status == MyLocationStatus.FirstAvailable) 0 else 1000
 
                         addUpdateListener {
                             marker.apply {
@@ -84,7 +85,7 @@ class LocationMarker(
             }
         }
 
-    private var locationStatus = LocationStatus.Unavailable
+    private var locationStatus = MyLocationStatus.Unavailable
         set(newStatus) {
             if (field != newStatus) {
                 field = newStatus
@@ -138,11 +139,11 @@ class LocationMarker(
     private fun invalidateIcon() {
 
         val icon = when (locationStatus) {
-            LocationStatus.Unavailable -> when (movementStatus) {
+            MyLocationStatus.Unavailable -> when (movementStatus) {
                 MovementStatus.Standing -> resources.standingOffline
                 MovementStatus.Moving -> resources.movingOffline
             }
-            LocationStatus.FirstAvailable, LocationStatus.Available -> when (movementStatus) {
+            MyLocationStatus.FirstAvailable, MyLocationStatus.Available -> when (movementStatus) {
                 MovementStatus.Standing -> resources.standingOnline
                 MovementStatus.Moving -> resources.movingOnline
             }

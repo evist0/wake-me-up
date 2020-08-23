@@ -32,7 +32,7 @@ import com.mancj.materialsearchbar.MaterialSearchBar.OnSearchActionListener
 import com.pampam.wakemeup.BuildConfig
 import com.pampam.wakemeup.R
 import com.pampam.wakemeup.data.MyLocationService
-import com.pampam.wakemeup.data.model.LocationStatus
+import com.pampam.wakemeup.data.model.MyLocationStatus
 import com.pampam.wakemeup.databinding.ActivityMainBinding
 import kotlinx.android.synthetic.main.activity_main.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -216,7 +216,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
             applyTo(controlsLayout)
         }
 
-        if (enabled) viewModel.onSearchBegin() else viewModel.onSearchEnd()
+        if (enabled) {
+            viewModel.onSearchBegin()
+        }
     }
 
     override fun onSearchConfirmed(query: CharSequence?) {
@@ -339,7 +341,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         myLocationButton.setOnClickListener {
             val myLastLocation = viewModel.myLastLocation.value
             if (myLastLocation != null) {
-                if (myLastLocation.status == LocationStatus.Unavailable) {
+                if (myLastLocation.status == MyLocationStatus.Unavailable) {
                     showLocationUnavailable()
                 } else {
                     viewModel.isFocused.value = !viewModel.isFocused.value!!

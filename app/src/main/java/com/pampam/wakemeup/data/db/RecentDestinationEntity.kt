@@ -7,5 +7,7 @@ import androidx.room.PrimaryKey
 data class RecentDestinationEntity(
     @PrimaryKey val placeId: String,
     val primaryText: String,
-    val secondaryText: String
+    val secondaryText: String,
+    val latitude: Double,
+    val longitude: Double
 )

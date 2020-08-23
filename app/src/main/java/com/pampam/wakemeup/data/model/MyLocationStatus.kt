@@ -1,6 +1,6 @@
 package com.pampam.wakemeup.data.model
 
-enum class LocationStatus {
+enum class MyLocationStatus {
     Unavailable,
     FirstAvailable,
     Available;

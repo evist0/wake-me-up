@@ -3,15 +3,15 @@ package com.pampam.wakemeup.ui
 import androidx.lifecycle.*
 import com.pampam.wakemeup.data.DestinationRepository
 import com.pampam.wakemeup.data.MyLocationRepository
-import com.pampam.wakemeup.data.model.Destination
-import com.pampam.wakemeup.data.model.Location
+import com.pampam.wakemeup.data.model.DestinationPrediction
+import com.pampam.wakemeup.data.model.MyLocation
 
 class MainActivityViewModel(
     myLocationRepository: MyLocationRepository,
     private val destinationRepository: DestinationRepository
 ) : ViewModel() {
 
-    val myLastLocation: LiveData<Location> = myLocationRepository.myLastLocation
+    val myLastLocation: LiveData<MyLocation> = myLocationRepository.myLastLocation
     val listenToLocation = myLocationRepository.isListenToLocation
     val isFocused = MutableLiveData<Boolean>(false)
 
@@ -22,30 +22,30 @@ class MainActivityViewModel(
 
     private var autocompleteSession: DestinationRepository.AutocompleteSession? = null
 
-    private val _suggestedDestinations = MediatorLiveData<List<Destination>>()
-    val suggestedDestinations: LiveData<List<Destination>> = _suggestedDestinations
+    private val _suggestedDestinations = MediatorLiveData<List<DestinationPrediction>>()
+    val suggestedDestinations: LiveData<List<DestinationPrediction>> = _suggestedDestinations
 
     fun onSearchBegin() {
-        autocompleteSession =
-            destinationRepository.newAutocompleteSession().apply {
-                _suggestedDestinations.addSource(autocompletionLiveData) { currentSuggestions ->
-                    if (currentSuggestions != _suggestedDestinations.value) {
-                        _suggestedDestinations.value = currentSuggestions
+        if (autocompleteSession != null) {
+            autocompleteSession =
+                destinationRepository.newAutocompleteSession().apply {
+                    _suggestedDestinations.addSource(autocompletionLiveData) { currentSuggestions ->
+                        if (currentSuggestions != _suggestedDestinations.value) {
+                            _suggestedDestinations.value = currentSuggestions
+                        }
                     }
                 }
-            }
 
-        destinationSearchQuery.observeForever(destinationSearchQueryObserver)
+            destinationSearchQuery.observeForever(destinationSearchQueryObserver)
+        }
     }
 
-    fun onSearchEnd() {
+    private fun endSession() {
 
         _suggestedDestinations.apply {
             removeSource(autocompleteSession!!.autocompletionLiveData)
         }
 
         autocompleteSession = null
-
-        destinationSearchQuery.removeObserver(destinationSearchQueryObserver)
     }
 }
