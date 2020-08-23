@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.google.android.libraries.places.api.Places
 import com.pampam.wakemeup.data.DestinationRepository
 import com.pampam.wakemeup.data.MyLocationRepository
+import com.pampam.wakemeup.data.SessionRepository
 import com.pampam.wakemeup.data.db.AppDatabase
 import com.pampam.wakemeup.ui.MainActivityViewModel
 import org.koin.android.ext.koin.androidContext
@@ -33,7 +34,9 @@ class Application : Application() {
 
             single { MyLocationRepository() }
 
-            single { MainActivityViewModel(get(), get()) }
+            single { SessionRepository() }
+
+            single { MainActivityViewModel(get(), get(), get()) }
         }
 
         startKoin {

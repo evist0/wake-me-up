@@ -156,4 +156,7 @@ class DestinationRepository(
         return AutocompleteSession()
     }
 
+    fun deleteRecentDestinationById(placeId: String) {
+        recentDestinationDao.deleteRecentDestinationById(placeId)
+    }
 }

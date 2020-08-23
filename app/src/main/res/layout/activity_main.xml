@@ -6,6 +6,10 @@
 
     <data>
 
+        <import type="android.view.View" />
+
+        <import type="com.pampam.wakemeup.data.model.SessionStatus" />
+
         <variable
             name="viewModel"
             type="com.pampam.wakemeup.ui.MainActivityViewModel" />
@@ -45,6 +49,7 @@
                 android:contentDescription="@string/show_me"
                 android:longClickable="false"
                 android:src="@drawable/ic_baseline_near_me_24"
+                android:visibility="@{viewModel.currentSession == null ? View.VISIBLE : View.GONE}"
                 app:backgroundTint="?attr/colorBackgroundFloating"
                 app:fabCustomSize="50dp"
                 app:layout_constraintBottom_toTopOf="@id/searchDetailsLayout"
@@ -66,7 +71,7 @@
                     android:layout_marginLeft="18dp"
                     android:layout_marginRight="18dp"
                     android:layout_marginBottom="18dp"
-                    android:visibility="gone"
+                    android:visibility="@{viewModel.currentSession != null ? View.VISIBLE : View.GONE}"
                     app:cardCornerRadius="20dp">
 
 
@@ -82,6 +87,7 @@
                             android:id="@+id/detailsPrimaryText"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:text="@{viewModel.currentSession.details.primaryText}"
                             android:textAlignment="center"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
                             app:layout_constraintTop_toTopOf="parent" />
@@ -90,6 +96,7 @@
                             android:id="@+id/detailsSecondaryText"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:text="@{viewModel.currentSession.details.secondaryText}"
                             android:textAlignment="center"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
                             app:layout_constraintTop_toBottomOf="@id/detailsPrimaryText" />
@@ -98,7 +105,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="16dp"
-                            app:checkedChip="@id/defaultDistanceChip"
+                            android:checkedButton="@{viewModel.currentSession.range}"
                             app:layout_constraintBottom_toTopOf="@id/detailsButtonsLayout"
                             app:layout_constraintLeft_toLeftOf="parent"
                             app:layout_constraintRight_toRightOf="parent"
@@ -141,7 +148,8 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/details_awake_button" />
+                                android:text="@string/details_awake_button"
+                                android:visibility="@{viewModel.currentSession.status != SessionStatus.Active ? View.VISIBLE : View.GONE}" />
 
                             <com.google.android.material.button.MaterialButton
                                 android:id="@+id/cancelButton"
@@ -167,14 +175,14 @@
                     android:paddingTop="8dp"
                     android:paddingRight="10dp"
                     android:paddingBottom="24dp"
+                    android:visibility="@{viewModel.currentSession != null ? View.GONE : View.VISIBLE}"
                     app:mt_borderlessRippleEnabled="false"
                     app:mt_hint="ДК &quot; Металлург &quot;"
                     app:mt_maxSuggestionsCount="10"
                     app:mt_placeholder="Введите название остановки"
                     app:mt_roundedSearchBarEnabled="true"
                     app:mt_speechMode="false"
-                    app:mt_suggestionsAnimationSpeed="200"
-                    tools:visibility="visible">
+                    app:mt_suggestionsAnimationSpeed="200">
 
                 </com.mancj.materialsearchbar.MaterialSearchBar>
             </FrameLayout>
