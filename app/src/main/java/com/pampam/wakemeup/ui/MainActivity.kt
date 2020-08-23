@@ -64,8 +64,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
 
         inflateWithDataBinding()
 
-        adjustControlLayoutTranslucentMargins()
-
         initSearchBar()
         initMapAsync()
     }
@@ -141,7 +139,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                 detailsDistanceChipGroup.check(distanceChipId)
 
                 if (session.details != null) {
-                    focusCamera(myLocationMarker.location.latLng)
+                    focusCamera(viewModel.myLastLocation.value?.latLng)
 
                     destinationMarker.apply {
                         position = session.details.latLng
@@ -190,10 +188,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         cameraUpdate?.let {
             map.animateCamera(it)
         }
-    }
-
-    private fun adjustControlLayoutTranslucentMargins() {
-
     }
 
     private fun inflateWithDataBinding() {
