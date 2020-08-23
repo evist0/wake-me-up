@@ -66,6 +66,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
 
         adjustControlLayoutTranslucentMargins()
 
+        initSearchBar()
         initMapAsync()
     }
 
@@ -324,7 +325,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         initMyLocationButton()
         initMyLocationMarker()
         initSearchDetailsLayout()
-        initSearchBar()
         initDistanceChipGroup()
         initAwakeButton()
         initCancelButton()
@@ -442,9 +442,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
     }
 
     private fun initSearchBar() {
-        searchBar.searchEditText.addTextChangedListener { editable ->
-            viewModel.destinationSearchQuery.value = editable.toString()
-        }
         val predictionsAdapter = DestinationPredictionsAdapter(layoutInflater).apply {
             onPredictionSelect = { prediction ->
                 viewModel.endSearch(prediction)
@@ -454,6 +451,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
             }
         }
         searchBar.setCustomSuggestionAdapter(predictionsAdapter)
+        searchBar.searchEditText.addTextChangedListener { editable ->
+            viewModel.destinationSearchQuery.value = editable.toString()
+        }
         searchBar.setOnSearchActionListener(this)
     }
 
