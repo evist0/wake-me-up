@@ -11,7 +11,5 @@
     <string name="location_unavailable_message">Ваше местоположение необходимо приложению для функционирования</string>
     <string name="details_awake_button">Разбудить</string>
     <string name="details_cancel_button">Отмена</string>
-    <string name="details_100m">100м</string>
-    <string name="details_250m">250м</string>
-    <string name="details_500m">500м</string>
+    <string name="details_meters_short">м</string>
 </resources>

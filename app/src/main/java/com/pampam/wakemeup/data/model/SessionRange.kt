@@ -6,8 +6,8 @@ enum class SessionRange {
     Far;
 
     fun toMeters() = when (this) {
-        Default -> 250.0
-        Near -> 100.0
-        Far -> 500.0
+        Default -> 500.0
+        Near -> 250.0
+        Far -> 1000.0
     }
 }
