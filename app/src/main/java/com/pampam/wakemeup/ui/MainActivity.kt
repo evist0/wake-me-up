@@ -36,8 +36,9 @@ import com.pampam.wakemeup.BuildConfig
 import com.pampam.wakemeup.R
 import com.pampam.wakemeup.data.MyLocationService
 import com.pampam.wakemeup.data.model.MyLocationStatus
-import com.pampam.wakemeup.data.model.Session
 import com.pampam.wakemeup.data.model.SessionRange
+import com.pampam.wakemeup.data.model.SessionStatus
+import com.pampam.wakemeup.data.model.mutated
 import com.pampam.wakemeup.databinding.ActivityMainBinding
 import kotlinx.android.synthetic.main.activity_main.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -91,9 +92,26 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         initPopup()
         initMapAsync()
         initDistanceChipGroup()
+        initAwakeButton()
+        initCancelButton()
 
         observeIsFocused()
         observeSuggestedDestinations()
+    }
+
+    private fun initCancelButton() {
+        cancelButton.setOnClickListener {
+            viewModel.currentSession.value = null
+        }
+    }
+
+    private fun initAwakeButton() {
+        awakeButton.setOnClickListener {
+            val session = viewModel.currentSession.value
+            if (session != null) {
+                viewModel.currentSession.value = session.mutated(SessionStatus.Active)
+            }
+        }
     }
 
     private fun initDistanceChipGroup() {
@@ -106,8 +124,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                     R.id.farDistanceChip -> SessionRange.Far
                     else -> null
                 }
-                range?.let {
-                    viewModel.currentSession.value = Session(session.details, session.status, it)
+                if (range != null) {
+                    viewModel.currentSession.value = session.mutated(range)
                 }
             }
         }
@@ -148,9 +166,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                 }
             } else {
                 map.uiSettings.setAllGesturesEnabled(true)
+                destinationMarker.apply {
+                    isVisible = false
+                }
+
+                destinationRadius.apply {
+                    isVisible = false
+                }
             }
-
-
         })
     }
 
@@ -344,7 +367,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         }
 
         initMyLocationMarker()
-
 
         observeMyLastLocation()
         observeSession()

@@ -65,6 +65,7 @@ class MainActivityViewModel(
 
         _suggestedDestinations.apply {
             removeSource(autocompleteSession!!.autocompletionLiveData)
+            value = emptyList()
         }
 
         autocompleteSession = null
