@@ -20,7 +20,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.app.ActivityCompat
 import androidx.core.graphics.ColorUtils
-import androidx.core.view.marginBottom
 import androidx.core.view.marginEnd
 import androidx.core.view.marginStart
 import androidx.core.widget.addTextChangedListener
@@ -37,6 +36,8 @@ import com.pampam.wakemeup.BuildConfig
 import com.pampam.wakemeup.R
 import com.pampam.wakemeup.data.MyLocationService
 import com.pampam.wakemeup.data.model.MyLocationStatus
+import com.pampam.wakemeup.data.model.Session
+import com.pampam.wakemeup.data.model.SessionRange
 import com.pampam.wakemeup.databinding.ActivityMainBinding
 import kotlinx.android.synthetic.main.activity_main.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -89,40 +90,67 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         initSearchBar()
         initPopup()
         initMapAsync()
+        initDistanceChipGroup()
 
         observeIsFocused()
         observeSuggestedDestinations()
+    }
+
+    private fun initDistanceChipGroup() {
+        detailsDistanceChipGroup.setOnCheckedChangeListener { _, checkedId ->
+            val session = viewModel.currentSession.value
+            if (session != null) {
+                val range = when (checkedId) {
+                    R.id.defaultDistanceChip -> SessionRange.Default
+                    R.id.nearDistanceChip -> SessionRange.Near
+                    R.id.farDistanceChip -> SessionRange.Far
+                    else -> null
+                }
+                range?.let {
+                    viewModel.currentSession.value = Session(session.details, session.status, it)
+                }
+            }
+        }
     }
 
     private fun observeSession() {
         viewModel.currentSession.observe(this, Observer { session ->
             map.setPadding(
                 searchBar.marginStart,
-                statusBarHeight + myLocationButton.marginBottom,
+                statusBarHeight,
                 searchBar.marginEnd,
-                searchDetailsLayout.height + myLocationButton.marginBottom + navBarHeight
+                searchDetailsLayout.height + navBarHeight
             )
 
             if (session != null) {
                 map.uiSettings.setAllGesturesEnabled(false)
+
+                val distanceChipId = when (session.range) {
+                    SessionRange.Default -> R.id.defaultDistanceChip
+                    SessionRange.Near -> R.id.nearDistanceChip
+                    SessionRange.Far -> R.id.farDistanceChip
+                }
+                detailsDistanceChipGroup.check(distanceChipId)
+
+                if (session.details != null) {
+                    focusCamera(myLocationMarker.location.latLng)
+
+                    destinationMarker.apply {
+                        position = session.details.latLng
+                        isVisible = true
+                    }
+
+                    destinationRadius.apply {
+                        center = session.details.latLng
+                        radius = session.range.toMeters()
+                        isVisible = true
+                    }
+                }
             } else {
                 map.uiSettings.setAllGesturesEnabled(true)
             }
 
-            if (session?.details != null) {
-                focusCamera(myLocationMarker.location.latLng)
 
-                destinationMarker.apply {
-                    position = session.details.latLng
-                    isVisible = true
-                }
-
-                destinationRadius.apply {
-                    center = session.details.latLng
-                    radius = session.range.toMeters()
-                    isVisible = true
-                }
-            }
         })
     }
 
@@ -316,6 +344,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         }
 
         initMyLocationMarker()
+
 
         observeMyLastLocation()
         observeSession()

@@ -4,5 +4,5 @@ import androidx.lifecycle.MutableLiveData
 import com.pampam.wakemeup.data.model.Session
 
 class SessionRepository {
-    val currentSession = MutableLiveData<Session>(null)
+    val currentSession = MutableLiveData<Session?>(null)
 }

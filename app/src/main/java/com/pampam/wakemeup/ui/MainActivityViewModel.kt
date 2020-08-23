@@ -30,7 +30,7 @@ class MainActivityViewModel(
     private val _suggestedDestinations = MediatorLiveData<List<DestinationPrediction>>()
     val suggestedDestinations: LiveData<List<DestinationPrediction>> = _suggestedDestinations
 
-    val currentSession: LiveData<Session?> = sessionRepository.currentSession
+    val currentSession: MutableLiveData<Session?> = sessionRepository.currentSession
 
     fun beginSearch() {
         if (autocompleteSession == null) {

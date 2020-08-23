@@ -102,10 +102,10 @@
                             app:layout_constraintTop_toBottomOf="@id/detailsPrimaryText" />
 
                         <com.google.android.material.chip.ChipGroup
+                            android:id="@+id/detailsDistanceChipGroup"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="16dp"
-                            android:checkedButton="@{viewModel.currentSession.range}"
                             app:layout_constraintBottom_toTopOf="@id/detailsButtonsLayout"
                             app:layout_constraintLeft_toLeftOf="parent"
                             app:layout_constraintRight_toRightOf="parent"
