@@ -28,6 +28,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.mancj.materialsearchbar.MaterialSearchBar.OnSearchActionListener
 import com.pampam.wakemeup.BuildConfig
 import com.pampam.wakemeup.R
@@ -233,6 +234,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                 searchBar.marginEnd,
                 searchBar.height + navBarHeight
             )
+
+            setMapStyle(MapStyleOptions.loadRawResourceStyle(this@MainActivity, R.raw.mapstyle))
 
             setOnCameraMoveStartedListener { reason ->
                 when (reason) {
