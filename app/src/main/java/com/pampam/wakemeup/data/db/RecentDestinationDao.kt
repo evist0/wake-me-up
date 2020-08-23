@@ -9,7 +9,7 @@ import androidx.room.Query
 @Dao
 interface RecentDestinationDao {
 
-    @Query("SELECT * FROM recentDestination WHERE primaryText LIKE :query")
+    @Query("SELECT * FROM recentDestination WHERE primaryText LIKE '%' || :query || '%'")
     fun getRecentDestinations(query: String): LiveData<List<RecentDestinationEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

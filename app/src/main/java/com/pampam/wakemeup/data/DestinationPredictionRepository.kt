@@ -21,7 +21,7 @@ import com.pampam.wakemeup.data.model.DestinationDetails
 import com.pampam.wakemeup.data.model.DestinationPrediction
 import com.pampam.wakemeup.data.model.DestinationPredictionSource
 
-class DestinationRepository(
+class DestinationPredictionRepository(
     private val recentDestinationDao: RecentDestinationDao,
     private val placesClient: PlacesClient
 ) {

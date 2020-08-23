@@ -28,7 +28,6 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.SphericalUtil
@@ -129,6 +128,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
     private fun observeSession() {
         viewModel.currentSession.observe(this, Observer { session ->
             if (session != null) {
+                focusCamera()
+
+                viewModel.isFocused.value = false
+
                 map.uiSettings.setAllGesturesEnabled(false)
 
                 val distanceChipId = when (session.range) {
@@ -139,8 +142,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                 detailsDistanceChipGroup.check(distanceChipId)
 
                 if (session.details != null) {
-                    focusCamera(viewModel.myLastLocation.value?.latLng)
-
                     destinationMarker.apply {
                         position = session.details.latLng
                         radius = session.range.toMeters()
@@ -149,6 +150,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                 }
             } else {
                 map.uiSettings.setAllGesturesEnabled(true)
+
                 destinationMarker.apply {
                     isVisible = false
                 }
@@ -156,7 +158,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         })
     }
 
-    private fun focusCamera(myLocation: LatLng?) {
+    private fun focusCamera() {
+        val myLocation = viewModel.myLastLocation.value?.latLng
         val destinationLatLng = viewModel.currentSession.value?.details?.latLng
         val cameraUpdate =
             if (destinationLatLng != null) {
@@ -175,7 +178,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                 )
             } else if (myLocation != null) {
                 val shouldZoom =
-                    !map.projection.visibleRegion.latLngBounds.contains(myLocation) || map.cameraPosition.zoom > 20.0f
+                    !map.projection.visibleRegion.latLngBounds.contains(myLocation) || map.cameraPosition.zoom < 12.0f
                 if (shouldZoom) {
                     CameraUpdateFactory.newLatLngZoom(myLocation, 17.0f)
                 } else {
@@ -417,9 +420,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         destinationMarker = map.addDestinationMarker(destinationMarkerResources, 500)
 
         myLocationMarker =
-            map.addLocationMarker(myLocationMarkerResources, 6000, 10.0) { newLocation ->
+            map.addLocationMarker(myLocationMarkerResources, 6000, 10.0) { _ ->
                 if (viewModel.isFocused.value == true || viewModel.currentSession.value != null) {
-                    focusCamera(newLocation)
+                    focusCamera()
                 }
             }
     }
@@ -460,9 +463,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                 } else {
                     viewModel.isFocused.value = !viewModel.isFocused.value!!
 
-                    val latLng = myLocationMarker.location.latLng
-                    if (viewModel.isFocused.value == true && latLng != null) {
-                        focusCamera(latLng)
+                    if (viewModel.isFocused.value == true) {
+                        focusCamera()
                     }
                 }
             } else if (viewModel.listenToLocation.value != true) {

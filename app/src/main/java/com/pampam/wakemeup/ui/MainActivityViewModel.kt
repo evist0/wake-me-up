@@ -1,7 +1,7 @@
 package com.pampam.wakemeup.ui
 
 import androidx.lifecycle.*
-import com.pampam.wakemeup.data.DestinationRepository
+import com.pampam.wakemeup.data.DestinationPredictionRepository
 import com.pampam.wakemeup.data.MyLocationRepository
 import com.pampam.wakemeup.data.SessionRepository
 import com.pampam.wakemeup.data.model.DestinationPrediction
@@ -17,7 +17,7 @@ enum class MainActivityViewModelState {
 
 class MainActivityViewModel(
     myLocationRepository: MyLocationRepository,
-    private val destinationRepository: DestinationRepository,
+    private val destinationPredictionRepository: DestinationPredictionRepository,
     private val sessionRepository: SessionRepository
 ) : ViewModel() {
 
@@ -25,7 +25,7 @@ class MainActivityViewModel(
     val listenToLocation = myLocationRepository.isListenToLocation
     val isFocused = MutableLiveData<Boolean>(false)
 
-    private val _isSearching = MutableLiveData<Boolean>(false)
+    private val _isSearching = MutableLiveData<Boolean>()
     val isSearching: LiveData<Boolean> = Transformations.distinctUntilChanged(_isSearching)
 
     val destinationSearchQuery = MutableLiveData<String>("")
@@ -33,10 +33,13 @@ class MainActivityViewModel(
         autocompleteSession?.updateQuery(myLastLocation.value?.latLng, query)
     }
 
-    private var autocompleteSession: DestinationRepository.AutocompleteSession? = null
+    private var autocompleteSession: DestinationPredictionRepository.AutocompleteSession? = null
 
     private val _suggestedDestinations = MediatorLiveData<List<DestinationPrediction>>()
-    val suggestedDestinations: LiveData<List<DestinationPrediction>> = _suggestedDestinations
+    val suggestedDestinations: LiveData<List<DestinationPrediction>> =
+        Transformations.switchMap(_isSearching) {
+            if (it) _suggestedDestinations else MutableLiveData<List<DestinationPrediction>>()
+        }
 
     val currentSession: MutableLiveData<Session?> = sessionRepository.currentSession
 
@@ -44,7 +47,7 @@ class MainActivityViewModel(
         _isSearching.value = true
         if (autocompleteSession == null) {
             autocompleteSession =
-                destinationRepository.newAutocompleteSession().apply {
+                destinationPredictionRepository.newAutocompleteSession().apply {
                     _suggestedDestinations.addSource(autocompletionLiveData) { currentSuggestions ->
                         if (currentSuggestions != _suggestedDestinations.value) {
                             _suggestedDestinations.value = currentSuggestions
@@ -68,20 +71,20 @@ class MainActivityViewModel(
         detailsLiveData.observeOnce(Observer { details ->
             sessionRepository.currentSession.value = Session(details, SessionStatus.Inactive)
         })
-        finishAutocompletion()
-    }
-
-    fun deleteRecentPrediction(prediction: DestinationPrediction) {
-        destinationRepository.deleteRecentDestinationById(prediction.placeId)
-    }
-
-    private fun finishAutocompletion() {
 
         _suggestedDestinations.apply {
             removeSource(autocompleteSession!!.autocompletionLiveData)
             value = emptyList()
         }
-
         autocompleteSession = null
     }
+
+    fun deleteRecentPrediction(prediction: DestinationPrediction) {
+        destinationPredictionRepository.deleteRecentDestinationById(prediction.placeId)
+    }
+
+    private fun finishAutocompletion() {
+
+    }
+
 }
