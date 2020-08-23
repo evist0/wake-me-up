@@ -15,7 +15,6 @@ import android.os.IBinder
 import android.provider.Settings
 import android.util.Log
 import android.util.TypedValue
-import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.app.ActivityCompat
@@ -48,26 +47,6 @@ private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionListener {
 
-    private val statusBarHeight by lazy {
-        var statusBarHeight = 0
-        val resourceId = resources.getIdentifier("status_bar_height", "dimen", "android")
-        if (resourceId > 0) {
-            statusBarHeight = resources.getDimensionPixelSize(resourceId)
-        }
-
-        statusBarHeight
-    }
-
-    private val navBarHeight by lazy {
-        var navBarHeight = 0
-        val resourceId = resources.getIdentifier("navigation_bar_height", "dimen", "android")
-        if (resourceId > 0) {
-            navBarHeight = resources.getDimensionPixelSize(resourceId)
-        }
-
-        navBarHeight
-    }
-
     private lateinit var binding: ActivityMainBinding
     private val viewModel by viewModel<MainActivityViewModel>()
 
@@ -76,8 +55,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
     private lateinit var myLocationMarker: MyLocationMarker
 
     private lateinit var popupView: PopupView
-
     private var locationServiceBound = false
+
     private lateinit var locationServiceConnection: ServiceConnection
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -87,19 +66,36 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
 
         adjustControlLayoutTranslucentMargins()
 
-        initMyLocationButton()
-        initSearchBar()
-        initPopup()
         initMapAsync()
-        initDistanceChipGroup()
-        initAwakeButton()
-        initCancelButton()
+    }
 
-        observeIsFocused()
-        observeSuggestedDestinations()
+    private fun observeIsSearching() {
+        viewModel.isSearching.observe(this, Observer { isSearching ->
+            if (isSearching) {
+                searchBar.openSearch()
+            } else {
+                searchBar.closeSearch()
+            }
+
+            ConstraintSet().apply {
+                clone(controlsLayout)
+                clear(
+                    R.id.searchDetailsLayout,
+                    if (isSearching) ConstraintSet.BOTTOM else ConstraintSet.TOP
+                )
+                connect(
+                    R.id.searchDetailsLayout,
+                    if (isSearching) ConstraintSet.TOP else ConstraintSet.BOTTOM,
+                    R.id.controlsLayout,
+                    if (isSearching) ConstraintSet.TOP else ConstraintSet.BOTTOM
+                )
+                applyTo(controlsLayout)
+            }
+        })
     }
 
     private fun initCancelButton() {
+
         cancelButton.setOnClickListener {
             viewModel.currentSession.value = null
         }
@@ -133,16 +129,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
 
     private fun observeSession() {
         viewModel.currentSession.observe(this, Observer { session ->
-            map.setPadding(
-                searchBar.marginStart,
-                statusBarHeight,
-                searchBar.marginEnd,
-                searchDetailsLayout.height + navBarHeight
-            )
-
             if (session != null) {
                 map.uiSettings.setAllGesturesEnabled(false)
-
 
                 val distanceChipId = when (session.range) {
                     SessionRange.Default -> R.id.defaultDistanceChip
@@ -159,11 +147,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                         radius = session.range.toMeters()
                         isVisible = true
                     }
-                } else {
-                    map.uiSettings.setAllGesturesEnabled(true)
-                    destinationMarker.apply {
-                        isVisible = false
-                    }
+                }
+            } else {
+                map.uiSettings.setAllGesturesEnabled(true)
+                destinationMarker.apply {
+                    isVisible = false
                 }
             }
         })
@@ -204,16 +192,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
     }
 
     private fun adjustControlLayoutTranslucentMargins() {
-        val controlViewLayoutParams = controlsLayout.layoutParams as FrameLayout.LayoutParams
-        controlViewLayoutParams.apply {
-            setMargins(
-                leftMargin,
-                topMargin + statusBarHeight,
-                rightMargin,
-                bottomMargin + navBarHeight
-            )
-        }
-        controlsLayout.layoutParams = controlViewLayoutParams
+
     }
 
     private fun inflateWithDataBinding() {
@@ -311,34 +290,17 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         }
     }
 
-    override fun onButtonClicked(buttonCode: Int) {
-
-    }
+    override fun onButtonClicked(buttonCode: Int) {}
 
     override fun onSearchStateChanged(enabled: Boolean) {
-        ConstraintSet().apply {
-            clone(controlsLayout)
-            clear(
-                R.id.searchDetailsLayout,
-                if (enabled) ConstraintSet.BOTTOM else ConstraintSet.TOP
-            )
-            connect(
-                R.id.searchDetailsLayout,
-                if (enabled) ConstraintSet.TOP else ConstraintSet.BOTTOM,
-                R.id.controlsLayout,
-                if (enabled) ConstraintSet.TOP else ConstraintSet.BOTTOM
-            )
-            applyTo(controlsLayout)
-        }
-
         if (enabled) {
             viewModel.beginSearch()
+        } else {
+            viewModel.closeSearch()
         }
     }
 
-    override fun onSearchConfirmed(query: CharSequence?) {
-
-    }
+    override fun onSearchConfirmed(query: CharSequence?) {}
 
     override fun onMapReady(it: GoogleMap) {
         map = it.apply {
@@ -358,10 +320,36 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
             }
         }
 
+        initPopup()
+        initMyLocationButton()
         initMyLocationMarker()
+        initSearchDetailsLayout()
+        initSearchBar()
+        initDistanceChipGroup()
+        initAwakeButton()
+        initCancelButton()
 
+        observeIsFocused()
+        observeIsSearching()
+        observeSuggestedDestinations()
         observeMyLastLocation()
         observeSession()
+    }
+
+    private fun initSearchDetailsLayout() {
+        searchDetailsLayout.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+            val paddingBottom =
+                controlsLayout.paddingBottom +
+                        if (viewModel.isSearching.value == false || viewModel.currentSession.value != null)
+                            searchDetailsLayout.height
+                        else 0
+            map.setPadding(
+                searchBar.marginStart + searchBar.paddingStart,
+                controlsLayout.paddingTop,
+                searchBar.marginEnd + searchBar.paddingEnd,
+                paddingBottom
+            )
+        }
     }
 
     private fun showLocationPermissionRequired() {
@@ -459,8 +447,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         }
         val predictionsAdapter = DestinationPredictionsAdapter(layoutInflater).apply {
             onPredictionSelect = { prediction ->
-                viewModel.confirmPrediction(prediction)
-                searchBar.closeSearch()
+                viewModel.endSearch(prediction)
             }
             onPredictionDelete = { prediction ->
                 viewModel.deleteRecentPrediction(prediction)

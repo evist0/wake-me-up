@@ -10,6 +10,11 @@ import com.pampam.wakemeup.data.model.Session
 import com.pampam.wakemeup.data.model.SessionStatus
 import com.pampam.wakemeup.observeOnce
 
+enum class MainActivityViewModelState {
+    Browsing,
+
+}
+
 class MainActivityViewModel(
     myLocationRepository: MyLocationRepository,
     private val destinationRepository: DestinationRepository,
@@ -19,6 +24,9 @@ class MainActivityViewModel(
     val myLastLocation: LiveData<MyLocation> = myLocationRepository.myLastLocation
     val listenToLocation = myLocationRepository.isListenToLocation
     val isFocused = MutableLiveData<Boolean>(false)
+
+    private val _isSearching = MutableLiveData<Boolean>(false)
+    val isSearching: LiveData<Boolean> = Transformations.distinctUntilChanged(_isSearching)
 
     val destinationSearchQuery = MutableLiveData<String>("")
     private val destinationSearchQueryObserver = Observer<String> { query ->
@@ -33,6 +41,7 @@ class MainActivityViewModel(
     val currentSession: MutableLiveData<Session?> = sessionRepository.currentSession
 
     fun beginSearch() {
+        _isSearching.value = true
         if (autocompleteSession == null) {
             autocompleteSession =
                 destinationRepository.newAutocompleteSession().apply {
@@ -47,7 +56,12 @@ class MainActivityViewModel(
         }
     }
 
-    fun confirmPrediction(prediction: DestinationPrediction) {
+    fun closeSearch() {
+        _isSearching.value = false
+    }
+
+    fun endSearch(prediction: DestinationPrediction) {
+        _isSearching.value = false
         sessionRepository.currentSession.value = Session()
 
         val detailsLiveData = autocompleteSession!!.fetchDetails(prediction)
