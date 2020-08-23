@@ -17,16 +17,16 @@ import com.pampam.wakemeup.ui.animation.RotationEvaluator
 import kotlin.math.PI
 import kotlin.math.atan2
 
-data class LocationMarkerResources(
+data class MyLocationMarkerResources(
     val movingOnline: Bitmap,
     val standingOnline: Bitmap,
     val movingOffline: Bitmap,
     val standingOffline: Bitmap
 )
 
-class LocationMarker(
+class MyLocationMarker(
     private val marker: Marker,
-    private val resources: LocationMarkerResources,
+    private val resources: MyLocationMarkerResources,
     movementTimeout: Long,
     private val movementEpsilon: Double,
     private val onMoveAnimationEnd: (newLocation: LatLng) -> Unit
@@ -154,18 +154,19 @@ class LocationMarker(
 }
 
 fun GoogleMap.addLocationMarker(
-    resources: LocationMarkerResources,
+    resources: MyLocationMarkerResources,
     movementTimeout: Long,
     movementEpsilon: Double,
     onMoveAnimationEnd: (newLocation: LatLng) -> Unit
-): LocationMarker {
+): MyLocationMarker {
 
     val marker = addMarker(MarkerOptions().apply {
         flat(true)
+        anchor(0.5f, 0.5f)
         position(LatLng(0.0, 0.0))
         icon(BitmapDescriptorFactory.fromBitmap(resources.standingOffline))
         visible(false)
     })
 
-    return LocationMarker(marker, resources, movementTimeout, movementEpsilon, onMoveAnimationEnd)
+    return MyLocationMarker(marker, resources, movementTimeout, movementEpsilon, onMoveAnimationEnd)
 }

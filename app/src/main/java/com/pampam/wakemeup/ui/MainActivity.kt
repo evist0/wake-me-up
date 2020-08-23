@@ -66,7 +66,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
     private val viewModel by viewModel<MainActivityViewModel>()
 
     private lateinit var map: GoogleMap
-    private lateinit var myLocationMarker: LocationMarker
+    private lateinit var myLocationMarker: MyLocationMarker
 
     private lateinit var popupView: PopupView
 
@@ -302,11 +302,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                 BitmapFactory.decodeResource(
                     resources,
                     id
-                ), 64, 64, true
+                ), 128, 128, true
             )
         }
 
-        val myLocationMarkerResources = LocationMarkerResources(
+        val myLocationMarkerResources = MyLocationMarkerResources(
             movingOnline = decodeScaledBitmap(R.drawable.moving_online),
             standingOnline = decodeScaledBitmap(R.drawable.standing_online),
             movingOffline = decodeScaledBitmap(R.drawable.moving_offline),
