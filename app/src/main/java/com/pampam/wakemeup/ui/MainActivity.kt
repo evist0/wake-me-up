@@ -29,11 +29,12 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.*
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.SphericalUtil
 import com.mancj.materialsearchbar.MaterialSearchBar.OnSearchActionListener
-import com.pampam.wakemeup.BuildConfig
-import com.pampam.wakemeup.R
+import com.pampam.wakemeup.*
 import com.pampam.wakemeup.data.MyLocationService
 import com.pampam.wakemeup.data.model.MyLocationStatus
 import com.pampam.wakemeup.data.model.SessionRange
@@ -71,8 +72,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
     private val viewModel by viewModel<MainActivityViewModel>()
 
     private lateinit var map: GoogleMap
-    private lateinit var destinationMarker: Marker
-    private lateinit var destinationRadius: Circle
+    private lateinit var destinationMarker: DestinationMarker
     private lateinit var myLocationMarker: MyLocationMarker
 
     private lateinit var popupView: PopupView
@@ -143,6 +143,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
             if (session != null) {
                 map.uiSettings.setAllGesturesEnabled(false)
 
+
                 val distanceChipId = when (session.range) {
                     SessionRange.Default -> R.id.defaultDistanceChip
                     SessionRange.Near -> R.id.nearDistanceChip
@@ -155,23 +156,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
 
                     destinationMarker.apply {
                         position = session.details.latLng
-                        isVisible = true
-                    }
-
-                    destinationRadius.apply {
-                        center = session.details.latLng
                         radius = session.range.toMeters()
                         isVisible = true
                     }
-                }
-            } else {
-                map.uiSettings.setAllGesturesEnabled(true)
-                destinationMarker.apply {
-                    isVisible = false
-                }
-
-                destinationRadius.apply {
-                    isVisible = false
+                } else {
+                    map.uiSettings.setAllGesturesEnabled(true)
+                    destinationMarker.apply {
+                        isVisible = false
+                    }
                 }
             }
         })
@@ -418,32 +410,30 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
     }
 
     private fun initMyLocationMarker() {
-        fun decodeScaledBitmap(id: Int): Bitmap {
+        fun decodeScaledBitmap(id: Int, width: Int, height: Int): Bitmap {
             return Bitmap.createScaledBitmap(
                 BitmapFactory.decodeResource(
                     resources,
                     id
-                ), 128, 128, true
+                ), width, height, true
             )
         }
 
         val myLocationMarkerResources = MyLocationMarkerResources(
-            movingOnline = decodeScaledBitmap(R.drawable.moving_online),
-            standingOnline = decodeScaledBitmap(R.drawable.standing_online),
-            movingOffline = decodeScaledBitmap(R.drawable.moving_offline),
-            standingOffline = decodeScaledBitmap(R.drawable.standing_offline)
+            movingOnline = decodeScaledBitmap(R.drawable.moving_online, 128, 128),
+            standingOnline = decodeScaledBitmap(R.drawable.standing_online, 128, 128),
+            movingOffline = decodeScaledBitmap(R.drawable.moving_offline, 128, 128),
+            standingOffline = decodeScaledBitmap(R.drawable.standing_offline, 128, 128)
         )
 
-        destinationMarker = map.addMarker(MarkerOptions().position(LatLng(0.0, 0.0)).visible(false))
-        destinationRadius = map.addCircle(CircleOptions().apply {
-            val typedValue = TypedValue()
-            theme.resolveAttribute(R.attr.colorPrimary, typedValue, true)
-            val fill = ColorUtils.setAlphaComponent(typedValue.data, 0x80)
-            fillColor(fill)
-            strokeColor(getColor(R.color.white))
-            center(LatLng(0.0, 0.0))
-            visible(false)
-        })
+        val destinationMarkerResources = DestinationMarkerResources(
+            icon = decodeScaledBitmap(R.drawable.destination, 96, 96),
+            fillColor = ColorUtils.setAlphaComponent(getColor(R.color.primaryLightColor), 26),
+            strokeColor = getColor(R.color.primaryLightColor)
+        )
+
+        destinationMarker = map.addDestinationMarker(destinationMarkerResources, 500)
+
         myLocationMarker =
             map.addLocationMarker(myLocationMarkerResources, 6000, 10.0) { newLocation ->
                 if (viewModel.isFocused.value == true || viewModel.currentSession.value != null) {
