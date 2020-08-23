@@ -25,7 +25,7 @@ class MainActivityViewModel(
     val listenToLocation = myLocationRepository.isListenToLocation
     val isFocused = MutableLiveData<Boolean>(false)
 
-    private val _isSearching = MutableLiveData<Boolean>()
+    private val _isSearching = MutableLiveData<Boolean>(false)
     val isSearching: LiveData<Boolean> = Transformations.distinctUntilChanged(_isSearching)
 
     val destinationSearchQuery = MutableLiveData<String>("")
@@ -38,13 +38,17 @@ class MainActivityViewModel(
     private val _suggestedDestinations = MediatorLiveData<List<DestinationPrediction>>()
     val suggestedDestinations: LiveData<List<DestinationPrediction>> =
         Transformations.switchMap(_isSearching) {
-            if (it) _suggestedDestinations else MutableLiveData<List<DestinationPrediction>>()
+            if (it) _suggestedDestinations
+            else MutableLiveData<List<DestinationPrediction>>(
+                emptyList()
+            )
         }
 
     val currentSession: MutableLiveData<Session?> = sessionRepository.currentSession
 
     fun beginSearch() {
         _isSearching.value = true
+        destinationSearchQuery.value = ""
         if (autocompleteSession == null) {
             autocompleteSession =
                 destinationPredictionRepository.newAutocompleteSession().apply {
@@ -61,10 +65,12 @@ class MainActivityViewModel(
 
     fun closeSearch() {
         _isSearching.value = false
+        destinationSearchQuery.value = ""
     }
 
     fun endSearch(prediction: DestinationPrediction) {
-        _isSearching.value = false
+        closeSearch()
+
         sessionRepository.currentSession.value = Session()
 
         val detailsLiveData = autocompleteSession!!.fetchDetails(prediction)
