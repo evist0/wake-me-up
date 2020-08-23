@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -13,6 +14,7 @@ import android.os.Bundle
 import android.os.IBinder
 import android.provider.Settings
 import android.util.Log
+import android.util.TypedValue
 import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintSet
@@ -82,11 +84,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         initPopup()
         initMapAsync()
 
+        observeIsFocused()
         observeSuggestedDestinations()
     }
 
     private fun adjustControlLayoutTranslucentMargins() {
-        val controlViewLayoutParams = controlView.layoutParams as FrameLayout.LayoutParams
+        val controlViewLayoutParams = controlsLayout.layoutParams as FrameLayout.LayoutParams
         controlViewLayoutParams.apply {
             setMargins(
                 leftMargin,
@@ -95,7 +98,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                 bottomMargin + navBarHeight
             )
         }
-        controlView.layoutParams = controlViewLayoutParams
+        controlsLayout.layoutParams = controlViewLayoutParams
     }
 
     private fun inflateWithDataBinding() {
@@ -194,20 +197,23 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
     }
 
     override fun onButtonClicked(buttonCode: Int) {
-        TODO("Not yet implemented")
+
     }
 
     override fun onSearchStateChanged(enabled: Boolean) {
         ConstraintSet().apply {
-            clone(controlView)
-            clear(R.id.searchBar, if (enabled) ConstraintSet.BOTTOM else ConstraintSet.TOP)
+            clone(controlsLayout)
+            clear(
+                R.id.searchDetailsLayout,
+                if (enabled) ConstraintSet.BOTTOM else ConstraintSet.TOP
+            )
             connect(
-                R.id.searchBar,
+                R.id.searchDetailsLayout,
                 if (enabled) ConstraintSet.TOP else ConstraintSet.BOTTOM,
-                R.id.controlView,
+                R.id.controlsLayout,
                 if (enabled) ConstraintSet.TOP else ConstraintSet.BOTTOM
             )
-            applyTo(controlView)
+            applyTo(controlsLayout)
         }
 
         if (enabled) viewModel.onSearchBegin() else viewModel.onSearchEnd()
@@ -273,6 +279,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
     private fun observeMyLastLocation() {
         viewModel.myLastLocation.observe(this, Observer { location ->
             if (location != null) {
+                popupView.dismiss()
                 if (location.latLng != null) {
                     myLocationMarker.location = location
                 }
@@ -335,7 +342,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                 if (myLastLocation.status == LocationStatus.Unavailable) {
                     showLocationUnavailable()
                 } else {
-                    popupView.dismiss()
                     viewModel.isFocused.value = !viewModel.isFocused.value!!
                     if (viewModel.isFocused.value == true) {
                         map.animateCamera(
@@ -346,7 +352,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                         )
                     }
                 }
-            } else if (viewModel.listenToLocation.value == false) {
+            } else if (viewModel.listenToLocation.value != true) {
                 showLocationPermissionRequired()
             }
         }
@@ -355,6 +361,22 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
     private fun observeSuggestedDestinations() {
         viewModel.suggestedDestinations.observe(this, Observer { suggestedDestinations ->
             searchBar.updateLastSuggestions(suggestedDestinations)
+        })
+    }
+
+    private fun observeIsFocused() {
+        viewModel.isFocused.observe(this, Observer { isFocused ->
+            val tint = if (isFocused) {
+                val typedValue = TypedValue()
+                theme.resolveAttribute(R.attr.colorPrimary, typedValue, true)
+                typedValue.data
+            } else {
+                getColor(R.color.quantum_grey)
+            }
+            myLocationButton.imageTintList = ColorStateList(
+                arrayOf(intArrayOf(android.R.attr.state_enabled)),
+                intArrayOf(tint)
+            )
         })
     }
 }

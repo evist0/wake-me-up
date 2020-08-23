@@ -11,4 +11,9 @@
     <string name="notification_main_text">We will wake you up!</string>
     <string name="popup_accept_text">OK</string>
     <string name="popup_dismiss_text">Later</string>
+    <string name="details_awake_button">Awake</string>
+    <string name="details_cancel_button">Cancel</string>
+    <string name="details_100m">100m</string>
+    <string name="details_250m">250m</string>
+    <string name="details_500m">500m</string>
 </resources>
