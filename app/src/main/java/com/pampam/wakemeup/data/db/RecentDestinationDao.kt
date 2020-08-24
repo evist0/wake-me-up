@@ -15,6 +15,9 @@ interface RecentDestinationDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertRecentDestination(recentDestinationEntity: RecentDestinationEntity)
 
+    @Query("SELECT EXISTS (SELECT 1 FROM recentDestination WHERE placeId = :placeId)")
+    fun isDestinationExistsById(placeId: String): Boolean
+
     @Query("DELETE FROM recentDestination WHERE placeId = :placeId")
     fun deleteRecentDestinationById(placeId: String)
 }

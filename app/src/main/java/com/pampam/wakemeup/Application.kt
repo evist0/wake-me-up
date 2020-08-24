@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.room.Room
 import com.google.android.libraries.places.api.Places
 import com.pampam.wakemeup.data.DestinationPredictionRepository
-import com.pampam.wakemeup.data.MyLocationRepository
+import com.pampam.wakemeup.data.LocationRepository
 import com.pampam.wakemeup.data.SessionRepository
 import com.pampam.wakemeup.data.db.AppDatabase
 import com.pampam.wakemeup.ui.MainActivityViewModel
@@ -23,16 +23,14 @@ class Application : Application() {
             applicationContext,
             AppDatabase::class.java,
             AppDatabase::class.simpleName.toString()
-        ).apply {
-            allowMainThreadQueries()
-        }.build()
+        ).build()
 
         val appModule = module {
             single { Places.createClient(this@Application) }
             single { appDatabase.getLastDestinationDao() }
             single { DestinationPredictionRepository(get(), get()) }
 
-            single { MyLocationRepository() }
+            single { LocationRepository() }
 
             single { SessionRepository() }
 

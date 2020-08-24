@@ -22,6 +22,10 @@ object RotationEvaluator : TypeEvaluator<Float> {
         relativeX /= relativeAbs
         relativeY /= relativeAbs
 
+        if (relativeX != relativeX || relativeY != relativeY) {
+            return y
+        }
+
         return atan2(
             sin(x) * cos(theta) + relativeY * sin(theta),
             cos(x) * cos(theta) + relativeX * sin(theta)

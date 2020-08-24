@@ -19,7 +19,9 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
 
-        <activity android:name=".ui.MainActivity">
+        <activity
+            android:name=".ui.MainActivity"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -27,7 +29,7 @@
         </activity>
 
         <service
-            android:name=".data.MyLocationService"
+            android:name=".data.LocationService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="location" />

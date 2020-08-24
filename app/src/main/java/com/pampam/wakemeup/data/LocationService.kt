@@ -3,7 +3,6 @@ package com.pampam.wakemeup.data
 import android.app.*
 import android.content.Context
 import android.content.Intent
-import android.content.res.Configuration
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
@@ -12,18 +11,18 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.Observer
 import com.google.android.gms.location.*
-import com.google.android.gms.maps.model.LatLng
 import com.pampam.wakemeup.R
-import com.pampam.wakemeup.data.model.MyLocation
-import com.pampam.wakemeup.data.model.MyLocationStatus
+import com.pampam.wakemeup.data.model.SessionStatus
 import com.pampam.wakemeup.ui.MainActivity
 import org.koin.android.ext.android.inject
 import java.util.concurrent.TimeUnit
 
-class MyLocationService : Service() {
+class LocationService : Service() {
 
-    private val locationRepository: MyLocationRepository by inject()
-    private lateinit var shouldListenToLocationObserver: Observer<Boolean>
+    private val locationRepository: LocationRepository by inject()
+    private val sessionRepository: SessionRepository by inject()
+
+    private lateinit var hasLocationPermissionObserver: Observer<Boolean>
 
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private lateinit var locationRequest: LocationRequest
@@ -32,19 +31,17 @@ class MyLocationService : Service() {
     private var serviceRunningInForeground = false
     private lateinit var notificationManager: NotificationManager
 
-    private var configurationChange = false
-
     private val localBinder = LocalBinder()
 
     override fun onCreate() {
         super.onCreate()
-        Log.d(MyLocationService::class.simpleName, "onCreate()")
+        Log.d(LocationService::class.simpleName, "onCreate()")
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
         locationRequest = LocationRequest().apply {
-            interval = TimeUnit.SECONDS.toMillis(5)
+            interval = TimeUnit.SECONDS.toMillis(10)
             fastestInterval = TimeUnit.SECONDS.toMillis(5)
-            maxWaitTime = TimeUnit.SECONDS.toMillis(5)
+            maxWaitTime = TimeUnit.SECONDS.toMillis(0)
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY
         }
         locationCallback = object : LocationCallback() {
@@ -53,23 +50,7 @@ class MyLocationService : Service() {
 
                 Log.d(this::class.simpleName, "onLocationResult(): $result")
 
-                result.lastLocation?.apply {
-
-                    val myPreviousLocation = locationRepository.myLastLocation.value
-                    val myLocationEntity =
-                        MyLocation(
-                            status =
-                            if (myPreviousLocation == null
-                                || myPreviousLocation.status == MyLocationStatus.Unavailable
-                            )
-                                MyLocationStatus.FirstAvailable
-                            else
-                                MyLocationStatus.Available,
-                            latLng = LatLng(latitude, longitude)
-                        )
-
-                    locationRepository.myLastLocation.value = myLocationEntity
-                }
+                locationRepository.location.value = result.lastLocation
             }
 
             override fun onLocationAvailability(result: LocationAvailability) {
@@ -77,41 +58,31 @@ class MyLocationService : Service() {
 
                 Log.d(this::class.simpleName, "onLocationAvailability(): $result")
 
-                if (!result.isLocationAvailable) {
-
-                    val myLastLocation = locationRepository.myLastLocation.value
-                    val myLocationEntity = MyLocation(
-                        status = MyLocationStatus.Unavailable,
-                        latLng = myLastLocation?.latLng
-                    )
-
-                    locationRepository.myLastLocation.value = myLocationEntity
-                }
+                locationRepository.isLocationAvailable.value = result.isLocationAvailable
             }
         }
 
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        shouldListenToLocationObserver = Observer { listen ->
-
+        hasLocationPermissionObserver = Observer { listen ->
             if (listen) {
                 subscribeToLocation()
             } else {
                 unsubscribeToLocation()
             }
         }
-        locationRepository.isListenToLocation.observeForever(shouldListenToLocationObserver)
+        locationRepository.hasLocationPermission.observeForever(hasLocationPermissionObserver)
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
 
-        Log.d(MyLocationService::class.simpleName, "onStartCommand()")
+        Log.d(LocationService::class.simpleName, "onStartCommand()")
 
         val cancelLocationTrackingFromNotification = intent.getBooleanExtra(
             EXTRA_CANCEL_LOCATION_TRACKING_FROM_NOTIFICATION, false
         )
         if (cancelLocationTrackingFromNotification) {
-            unsubscribeToLocation()
+            sessionRepository.currentSession.value = null
             stopSelf()
         }
 
@@ -120,33 +91,38 @@ class MyLocationService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? {
 
-        Log.d(MyLocationService::class.simpleName, "onBind()")
+        Log.d(LocationService::class.simpleName, "onBind()")
 
         stopForeground(true)
         serviceRunningInForeground = false
-        configurationChange = false
         return localBinder
     }
 
     override fun onRebind(intent: Intent?) {
 
-        Log.d(MyLocationService::class.simpleName, "onRebind()")
+        Log.d(LocationService::class.simpleName, "onRebind()")
 
-        stopForeground(true)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } else {
+            stopForeground(true)
+        }
         serviceRunningInForeground = false
-        configurationChange = false
     }
 
     override fun onUnbind(intent: Intent?): Boolean {
 
-        Log.d(MyLocationService::class.simpleName, "onUnbind()")
+        Log.d(LocationService::class.simpleName, "onUnbind()")
 
-        if (!configurationChange) {
-            Log.d(MyLocationService::class.simpleName, "Start foreground service")
+        val session = sessionRepository.currentSession.value
+        if (session != null && session.status == SessionStatus.Active) {
+            Log.d(LocationService::class.simpleName, "Start foreground service")
 
             val notification = generateNotification()
             startForeground(NOTIFICATION_ID, notification)
             serviceRunningInForeground = true
+        } else {
+            stopSelf()
         }
 
         return true
@@ -154,36 +130,30 @@ class MyLocationService : Service() {
 
     override fun onDestroy() {
 
-        Log.d(MyLocationService::class.simpleName, "onDestroy()")
+        Log.d(LocationService::class.simpleName, "onDestroy()")
 
-        locationRepository.isListenToLocation.removeObserver(shouldListenToLocationObserver)
-    }
-
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-
-        Log.d(MyLocationService::class.simpleName, "onConfigurationChanged()")
-
-        configurationChange = true
+        locationRepository.hasLocationPermission.removeObserver(hasLocationPermissionObserver)
+        unsubscribeToLocation()
     }
 
     private fun subscribeToLocation() {
 
-        Log.d(MyLocationService::class.simpleName, "subscribeToLocation()")
+        Log.d(LocationService::class.simpleName, "subscribeToLocation()")
 
-        startService(Intent(applicationContext, MyLocationService::class.java))
+        startService(Intent(applicationContext, LocationService::class.java))
         try {
             fusedLocationProviderClient.requestLocationUpdates(
                 locationRequest, locationCallback, Looper.myLooper()
             )
         } catch (e: SecurityException) {
-            Log.e(MyLocationService::class.simpleName, "Lost location permission $e")
+            Log.e(LocationService::class.simpleName, "Lost location permission $e")
+            locationRepository.hasLocationPermission.value = false
         }
     }
 
     private fun unsubscribeToLocation() {
 
-        Log.d(MyLocationService::class.simpleName, "unsubscribeToLocation()")
+        Log.d(LocationService::class.simpleName, "unsubscribeToLocation()")
 
         fusedLocationProviderClient.removeLocationUpdates(locationCallback)
         stopSelf()
@@ -191,7 +161,7 @@ class MyLocationService : Service() {
 
     private fun generateNotification(): Notification {
 
-        Log.d(MyLocationService::class.simpleName, "generateNotification()")
+        Log.d(LocationService::class.simpleName, "generateNotification()")
 
         val mainNotificationText = getString(R.string.notification_main_text)
         val titleText = getString(R.string.app_name)
@@ -209,9 +179,11 @@ class MyLocationService : Service() {
             .bigText(mainNotificationText)
             .setBigContentTitle(titleText)
 
-        val launchActivityIntent = Intent(this, MainActivity::class.java)
+        val launchActivityIntent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP.or(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        }
 
-        val cancelIntent = Intent(this, MyLocationService::class.java)
+        val cancelIntent = Intent(this, LocationService::class.java)
         cancelIntent.putExtra(EXTRA_CANCEL_LOCATION_TRACKING_FROM_NOTIFICATION, true)
 
         val servicePendingIntent = PendingIntent.getService(
@@ -247,8 +219,8 @@ class MyLocationService : Service() {
     }
 
     inner class LocalBinder : Binder() {
-        internal val service: MyLocationService
-            get() = this@MyLocationService
+        internal val service: LocationService
+            get() = this@LocationService
     }
 
     companion object {

@@ -8,26 +8,29 @@ import kotlinx.android.synthetic.main.popup.view.*
 
 class PopupView(context: Context) : FrameLayout(context) {
 
-    lateinit var title: String
-    lateinit var message: String
+    var title: String
+        get() = "${popup_title.text}"
+        set(value) {
+            popup_title.text = value
+        }
+    var message: String
+        get() = "${popup_message.text}"
+        set(value) {
+            popup_message.text = value
+        }
 
     init {
         View.inflate(context, R.layout.popup, this)
+        setOnAcceptClickListener { }
+        setOnDenyClickListener { }
         dismiss()
     }
 
     fun show() {
-        popup_title.text = title
-        popup_message.text = message
         this.visibility = View.VISIBLE
     }
 
     fun dismiss() {
-        title = ""
-        message = ""
-        popup_accept.setOnClickListener { dismiss() }
-        popup_deny.setOnClickListener { dismiss() }
-
         this.visibility = View.GONE
     }
 

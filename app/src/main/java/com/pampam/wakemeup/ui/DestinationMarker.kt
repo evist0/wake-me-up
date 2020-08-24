@@ -1,4 +1,4 @@
-package com.pampam.wakemeup
+package com.pampam.wakemeup.ui
 
 import android.animation.ObjectAnimator
 import android.graphics.Bitmap
@@ -65,5 +65,9 @@ fun GoogleMap.addDestinationMarker(
         visible(false)
     })
 
-    return DestinationMarker(marker, circle, animationDuration)
+    return DestinationMarker(
+        marker,
+        circle,
+        animationDuration
+    )
 }

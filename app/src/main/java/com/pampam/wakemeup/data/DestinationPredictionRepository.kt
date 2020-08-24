@@ -14,12 +14,13 @@ import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRe
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsResponse
 import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.maps.android.SphericalUtil
-import com.pampam.wakemeup.BuildConfig
 import com.pampam.wakemeup.data.db.RecentDestinationDao
 import com.pampam.wakemeup.data.db.RecentDestinationEntity
 import com.pampam.wakemeup.data.model.DestinationDetails
 import com.pampam.wakemeup.data.model.DestinationPrediction
 import com.pampam.wakemeup.data.model.DestinationPredictionSource
+import io.reactivex.rxjava3.core.Flowable
+import io.reactivex.rxjava3.schedulers.Schedulers
 
 class DestinationPredictionRepository(
     private val recentDestinationDao: RecentDestinationDao,
@@ -36,10 +37,6 @@ class DestinationPredictionRepository(
             }
         private val _remotePredictionsLiveData =
             Transformations.switchMap(_queryOriginLiveData) { value ->
-                if (BuildConfig.DEBUG && token == null) {
-                    error("Assertion failed")
-                }
-
                 val query = value.first
                 val origin = value.second
                 val request =
@@ -69,11 +66,11 @@ class DestinationPredictionRepository(
         private val _autocompletionLiveData =
             MediatorLiveData<List<DestinationPrediction>>().apply {
                 addSource(_recentPredictionsLiveData) { entities ->
-                    value = makeAutocompletion(entities, _remotePredictionsLiveData.value)
+                    updateAutocompletion(entities, _remotePredictionsLiveData.value)
                 }
 
                 addSource(_remotePredictionsLiveData) { predictions ->
-                    value = makeAutocompletion(_recentPredictionsLiveData.value, predictions)
+                    updateAutocompletion(_recentPredictionsLiveData.value, predictions)
                 }
             }
         val autocompletionLiveData: LiveData<List<DestinationPrediction>> = _autocompletionLiveData
@@ -95,15 +92,19 @@ class DestinationPredictionRepository(
             placesClient.fetchPlace(request).addOnSuccessListener { response ->
                 val latLng = response.place.latLng!!
 
-                recentDestinationDao.insertRecentDestination(
-                    RecentDestinationEntity(
-                        prediction.placeId,
-                        prediction.primaryText,
-                        prediction.secondaryText,
-                        latitude = latLng.latitude,
-                        longitude = latLng.longitude
-                    )
-                )
+                Flowable.just(recentDestinationDao)
+                    .subscribeOn(Schedulers.io())
+                    .subscribe {
+                        it.insertRecentDestination(
+                            RecentDestinationEntity(
+                                prediction.placeId,
+                                prediction.primaryText,
+                                prediction.secondaryText,
+                                latitude = latLng.latitude,
+                                longitude = latLng.longitude
+                            )
+                        )
+                    }
 
                 destinationDetailsLiveData.value = DestinationDetails(
                     prediction.placeId,
@@ -116,16 +117,33 @@ class DestinationPredictionRepository(
             return destinationDetailsLiveData
         }
 
-        private fun makeAutocompletion(
+        private fun updateAutocompletion(
             recent: List<RecentDestinationEntity>?,
             remote: List<AutocompletePrediction>?
-        ): List<DestinationPrediction> {
+        ) {
             val recentDestinations = recent?.recentPredictions() ?: emptyList()
             val remoteDestinations = remote?.remotePredictions() ?: emptyList()
 
-            return (recentDestinations + remoteDestinations).distinctBy { destination ->
-                destination.placeId
-            }
+            Flowable.just(recentDestinationDao)
+                .subscribeOn(Schedulers.io())
+                .subscribe { dao ->
+                    val (newRemoteRecents, newRemotes) = remoteDestinations.partition { remote ->
+                        dao.isDestinationExistsById(remote.placeId)
+                    }
+                    val newRecents = newRemoteRecents.map { recent ->
+                        DestinationPrediction(
+                            recent.placeId,
+                            recent.primaryText,
+                            recent.secondaryText,
+                            DestinationPredictionSource.Recent
+                        )
+                    }
+
+                    _autocompletionLiveData.postValue(
+                        (recentDestinations + newRecents + newRemotes).distinctBy { destination ->
+                            destination.placeId
+                        })
+                }
         }
 
         private fun List<AutocompletePrediction>.remotePredictions(): List<DestinationPrediction> =
@@ -157,6 +175,10 @@ class DestinationPredictionRepository(
     }
 
     fun deleteRecentDestinationById(placeId: String) {
-        recentDestinationDao.deleteRecentDestinationById(placeId)
+        Flowable.just(recentDestinationDao)
+            .subscribeOn(Schedulers.io())
+            .subscribe {
+                it.deleteRecentDestinationById(placeId)
+            }
     }
 }

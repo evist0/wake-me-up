@@ -32,13 +32,12 @@ import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.SphericalUtil
 import com.mancj.materialsearchbar.MaterialSearchBar.OnSearchActionListener
-import com.pampam.wakemeup.*
-import com.pampam.wakemeup.data.MyLocationService
-import com.pampam.wakemeup.data.model.MyLocationStatus
+import com.pampam.wakemeup.BuildConfig
+import com.pampam.wakemeup.R
+import com.pampam.wakemeup.data.LocationService
 import com.pampam.wakemeup.data.model.SessionRange
-import com.pampam.wakemeup.data.model.SessionStatus
-import com.pampam.wakemeup.data.model.mutated
 import com.pampam.wakemeup.databinding.ActivityMainBinding
+import com.pampam.wakemeup.toLatLng
 import kotlinx.android.synthetic.main.activity_main.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -51,9 +50,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
 
     private lateinit var map: GoogleMap
     private lateinit var destinationMarker: DestinationMarker
-    private lateinit var myLocationMarker: MyLocationMarker
+    private lateinit var locationMarker: LocationMarker
 
-    private lateinit var popupView: PopupView
+    private lateinit var locationPermissionPopup: PopupView
+    private lateinit var locationAvailabilityPopup: PopupView
     private var locationServiceBound = false
 
     private lateinit var locationServiceConnection: ServiceConnection
@@ -93,18 +93,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
     }
 
     private fun initCancelButton() {
-
         cancelButton.setOnClickListener {
-            viewModel.currentSession.value = null
+            viewModel.cancelSession()
         }
     }
 
     private fun initAwakeButton() {
         awakeButton.setOnClickListener {
-            val session = viewModel.currentSession.value
-            if (session != null) {
-                viewModel.currentSession.value = session.mutated(SessionStatus.Active)
-            }
+            viewModel.setSessionActive()
         }
     }
 
@@ -119,7 +115,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                     else -> null
                 }
                 if (range != null) {
-                    viewModel.currentSession.value = session.mutated(range)
+                    viewModel.setSessionRange(range)
                 }
             }
         }
@@ -128,9 +124,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
     private fun observeSession() {
         viewModel.currentSession.observe(this, Observer { session ->
             if (session != null) {
-                focusCamera()
-
-                viewModel.isFocused.value = false
+                viewModel.isShowMyLocation.value = false
 
                 map.uiSettings.setAllGesturesEnabled(false)
 
@@ -147,6 +141,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                         radius = session.range.toMeters()
                         isVisible = true
                     }
+                    focusCamera()
                 }
             } else {
                 map.uiSettings.setAllGesturesEnabled(true)
@@ -159,23 +154,29 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
     }
 
     private fun focusCamera() {
-        val myLocation = viewModel.myLastLocation.value?.latLng
+        if (viewModel.isShowMyLocation.value != true && viewModel.currentSession.value == null) {
+            return
+        }
+
+        val myLocation = viewModel.location.value?.toLatLng()
         val destinationLatLng = viewModel.currentSession.value?.details?.latLng
         val cameraUpdate =
             if (destinationLatLng != null) {
-                CameraUpdateFactory.newLatLngBounds(
-                    with(LatLngBounds.builder().apply {
-                        myLocation?.let {
+                if (myLocation != null) {
+                    CameraUpdateFactory.newLatLngBounds(
+                        with(LatLngBounds.builder().apply {
                             include(myLocation)
-                        }
-                        include(destinationLatLng)
-                    }.build()) {
-                        LatLngBounds(
-                            SphericalUtil.interpolate(northeast, southwest, 1.25),
-                            SphericalUtil.interpolate(southwest, northeast, 1.25)
-                        )
-                    }, 0
-                )
+                            include(destinationLatLng)
+                        }.build()) {
+                            LatLngBounds(
+                                SphericalUtil.interpolate(northeast, southwest, 1.25),
+                                SphericalUtil.interpolate(southwest, northeast, 1.25)
+                            )
+                        }, 0
+                    )
+                } else {
+                    CameraUpdateFactory.newLatLngZoom(destinationLatLng, 15.0f)
+                }
             } else if (myLocation != null) {
                 val shouldZoom =
                     !map.projection.visibleRegion.latLngBounds.contains(myLocation) || map.cameraPosition.zoom < 12.0f
@@ -211,7 +212,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         bindLocationService()
 
         if (foregroundPermissionApproved()) {
-            viewModel.listenToLocation.value = true
+            viewModel.hasLocationPermission.value = true
         } else {
             requestForegroundPermissions()
         }
@@ -220,9 +221,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
     override fun onStop() {
         super.onStop()
 
-        viewModel.listenToLocation.value = false
-
-        if (locationServiceBound) {
+        if (locationServiceBound && !isChangingConfigurations) {
             unbindService(locationServiceConnection)
             locationServiceBound = false
         }
@@ -239,7 +238,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
             }
         }
 
-        val serviceIntent = Intent(this, MyLocationService::class.java)
+        val serviceIntent = Intent(this, LocationService::class.java)
         bindService(serviceIntent, locationServiceConnection, Context.BIND_AUTO_CREATE)
     }
 
@@ -254,7 +253,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         val provideRationale = foregroundPermissionApproved()
 
         if (provideRationale) {
-            showLocationPermissionRequired()
+            locationPermissionPopup.show()
         } else {
             ActivityCompat.requestPermissions(
                 this@MainActivity,
@@ -278,11 +277,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                 }
 
                 grantResults[0] == PackageManager.PERMISSION_GRANTED -> {
-                    viewModel.listenToLocation.value = true
+                    viewModel.hasLocationPermission.value = true
                 }
 
                 else -> {
-                    showLocationPermissionRequired()
+                    locationPermissionPopup.show()
                 }
             }
         }
@@ -291,9 +290,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
     override fun onButtonClicked(buttonCode: Int) {}
 
     override fun onSearchStateChanged(enabled: Boolean) {
-        if (enabled) {
+        if (enabled && viewModel.isSearching.value != enabled) {
             viewModel.beginSearch()
-        } else {
+        } else if (!enabled && viewModel.isSearching.value != enabled) {
             viewModel.closeSearch()
         }
     }
@@ -312,25 +311,49 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
             setOnCameraMoveStartedListener { reason ->
                 when (reason) {
                     GoogleMap.OnCameraMoveStartedListener.REASON_GESTURE -> {
-                        viewModel.isFocused.value = false
+                        viewModel.isShowMyLocation.value = false
                     }
                 }
             }
         }
 
-        initPopup()
-        initMyLocationButton()
+        initLocationPermissionPopup()
+        initLocationAvailabilityPopup()
         initMyLocationMarker()
+        initMyLocationButton()
         initSearchDetailsLayout()
         initDistanceChipGroup()
         initAwakeButton()
         initCancelButton()
 
+        observeHasLocationPermission()
         observeIsFocused()
         observeIsSearching()
         observeSuggestedDestinations()
         observeMyLastLocation()
+        observeIsLocationAvailable()
         observeSession()
+    }
+
+    private fun observeHasLocationPermission() {
+        viewModel.hasLocationPermission.observe(this, Observer { hasLocationPermission ->
+            if (hasLocationPermission) {
+                locationPermissionPopup.dismiss()
+            } else {
+                locationPermissionPopup.show()
+            }
+        })
+    }
+
+    private fun observeIsLocationAvailable() {
+        viewModel.isLocationAvailable.observe(this, Observer { available ->
+            locationMarker.updateLocationAvailable(available)
+            if (available) {
+                locationAvailabilityPopup.dismiss()
+            } else {
+                locationAvailabilityPopup.show()
+            }
+        })
     }
 
     private fun initSearchDetailsLayout() {
@@ -341,55 +364,20 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                             searchDetailsLayout.height
                         else 0
             map.setPadding(
-                searchBar.marginStart + searchBar.paddingStart,
+                searchBar.marginStart + searchBar.paddingStart + controlsLayout.paddingStart,
                 controlsLayout.paddingTop,
-                searchBar.marginEnd + searchBar.paddingEnd,
+                searchBar.marginEnd + searchBar.paddingEnd + controlsLayout.paddingEnd,
                 paddingBottom
             )
+
+            focusCamera()
         }
     }
 
-    private fun showLocationPermissionRequired() {
-        popupView.apply {
-            title = getString(R.string.location_permission_title)
-            message = getString(R.string.location_permission_message)
-            setOnAcceptClickListener {
-                val intent = Intent()
-                intent.action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-                val uri = Uri.fromParts(
-                    "package",
-                    BuildConfig.APPLICATION_ID,
-                    null
-                )
-                intent.data = uri
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                startActivity(intent)
-            }
-        }.show()
-    }
-
-    private fun showLocationUnavailable() {
-        popupView.apply {
-            title = getString(R.string.location_unavailable_title)
-            message = getString(R.string.location_unavailable_message)
-            setOnAcceptClickListener {
-                val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                startActivity(intent)
-            }
-        }.show()
-    }
-
     private fun observeMyLastLocation() {
-        viewModel.myLastLocation.observe(this, Observer { location ->
-            if (location != null) {
-                popupView.dismiss()
-                if (location.latLng != null) {
-                    myLocationMarker.location = location
-                }
-
-                if (!location.status.isAvailable()) {
-                    showLocationUnavailable()
-                }
+        viewModel.location.observe(this, Observer { location ->
+            locationMarker.animateLocation(location) {
+                focusCamera()
             }
         })
     }
@@ -410,21 +398,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
             movingOffline = decodeScaledBitmap(R.drawable.moving_offline, 128, 128),
             standingOffline = decodeScaledBitmap(R.drawable.standing_offline, 128, 128)
         )
+        locationMarker = map.addLocationMarker(myLocationMarkerResources, 6000, 10.0)
 
-        val destinationMarkerResources = DestinationMarkerResources(
-            icon = decodeScaledBitmap(R.drawable.destination, 96, 96),
-            fillColor = ColorUtils.setAlphaComponent(getColor(R.color.primaryLightColor), 26),
-            strokeColor = getColor(R.color.primaryLightColor)
-        )
-
+        val destinationMarkerResources =
+            DestinationMarkerResources(
+                icon = decodeScaledBitmap(R.drawable.destination, 96, 96),
+                fillColor = ColorUtils.setAlphaComponent(getColor(R.color.primaryLightColor), 26),
+                strokeColor = getColor(R.color.primaryLightColor)
+            )
         destinationMarker = map.addDestinationMarker(destinationMarkerResources, 500)
-
-        myLocationMarker =
-            map.addLocationMarker(myLocationMarkerResources, 6000, 10.0) { _ ->
-                if (viewModel.isFocused.value == true || viewModel.currentSession.value != null) {
-                    focusCamera()
-                }
-            }
     }
 
     private fun initMapAsync() {
@@ -433,9 +415,36 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         mapFragment.getMapAsync(this)
     }
 
-    private fun initPopup() {
-        popupView = PopupView(this)
-        rootView.addView(popupView)
+    private fun initLocationPermissionPopup() {
+        locationPermissionPopup = PopupView(this).apply {
+            title = getString(R.string.location_permission_title)
+            message = getString(R.string.location_permission_message)
+            setOnAcceptClickListener {
+                val intent = Intent()
+                intent.action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                val uri = Uri.fromParts(
+                    "package",
+                    BuildConfig.APPLICATION_ID,
+                    null
+                )
+                intent.data = uri
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                startActivity(intent)
+            }
+        }
+        rootView.addView(locationPermissionPopup)
+    }
+
+    private fun initLocationAvailabilityPopup() {
+        locationAvailabilityPopup = PopupView(this).apply {
+            title = getString(R.string.location_unavailable_title)
+            message = getString(R.string.location_unavailable_message)
+            setOnAcceptClickListener {
+                val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                startActivity(intent)
+            }
+        }
+        rootView.addView(locationAvailabilityPopup)
     }
 
     private fun initSearchBar() {
@@ -456,19 +465,18 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
 
     private fun initMyLocationButton() {
         myLocationButton.setOnClickListener {
-            val myLastLocation = viewModel.myLastLocation.value
-            if (myLastLocation != null) {
-                if (myLastLocation.status == MyLocationStatus.Unavailable) {
-                    showLocationUnavailable()
-                } else {
-                    viewModel.isFocused.value = !viewModel.isFocused.value!!
-
-                    if (viewModel.isFocused.value == true) {
+            if (viewModel.hasLocationPermission.value != true) {
+                locationPermissionPopup.show()
+            } else if (viewModel.isLocationAvailable.value == false) {
+                locationAvailabilityPopup.show()
+            } else {
+                val location = viewModel.location.value
+                if (location != null) {
+                    viewModel.isShowMyLocation.value = !viewModel.isShowMyLocation.value!!
+                    if (viewModel.isShowMyLocation.value == true) {
                         focusCamera()
                     }
                 }
-            } else if (viewModel.listenToLocation.value != true) {
-                showLocationPermissionRequired()
             }
         }
     }
@@ -480,7 +488,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
     }
 
     private fun observeIsFocused() {
-        viewModel.isFocused.observe(this, Observer { isFocused ->
+        viewModel.isShowMyLocation.observe(this, Observer { isFocused ->
             val tint = if (isFocused) {
                 val typedValue = TypedValue()
                 theme.resolveAttribute(R.attr.colorPrimary, typedValue, true)
