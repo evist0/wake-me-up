@@ -378,8 +378,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                 searchBar.marginEnd + searchBar.paddingEnd + controlsLayout.paddingEnd,
                 paddingBottom
             )
-
-            focusCamera()
         }
     }
 

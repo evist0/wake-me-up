@@ -8,10 +8,10 @@
     <string name="location_unavailable_message">Your location is required for application to function</string>
     <string name="notification_open">Open</string>
     <string name="notification_close">Cancel</string>
-    <string name="notification_main_text">We will wake you up!</string>
+    <string name="notification_main_text">Left %1$.0f%2$s</string>
     <string name="popup_accept_text">OK</string>
     <string name="popup_dismiss_text">Later</string>
     <string name="details_awake_button">Awake</string>
     <string name="details_cancel_button">Cancel</string>
-    <string name="details_meters_short">m</string>
+    <string name="meters_short">m</string>
 </resources>

@@ -121,21 +121,21 @@
                                 style="@style/Widget.MaterialComponents.Chip.Choice"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text='@{String.format("%.0f%s", SessionRange.Near.toMeters(), @string/details_meters_short)}' />
+                                android:text='@{String.format("%.0f%s", SessionRange.Near.toMeters(), @string/meters_short)}' />
 
                             <com.google.android.material.chip.Chip
                                 android:id="@+id/defaultDistanceChip"
                                 style="@style/Widget.MaterialComponents.Chip.Choice"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text='@{String.format("%.0f%s", SessionRange.Default.toMeters(), @string/details_meters_short)}' />
+                                android:text='@{String.format("%.0f%s", SessionRange.Default.toMeters(), @string/meters_short)}' />
 
                             <com.google.android.material.chip.Chip
                                 android:id="@+id/farDistanceChip"
                                 style="@style/Widget.MaterialComponents.Chip.Choice"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text='@{String.format("%.0f%s", SessionRange.Far.toMeters(), @string/details_meters_short)}' />
+                                android:text='@{String.format("%.0f%s", SessionRange.Far.toMeters(), @string/meters_short)}' />
                         </com.google.android.material.chip.ChipGroup>
 
                         <LinearLayout

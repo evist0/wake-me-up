@@ -11,8 +11,10 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.Observer
 import com.google.android.gms.location.*
+import com.google.maps.android.SphericalUtil
 import com.pampam.wakemeup.R
 import com.pampam.wakemeup.data.model.SessionStatus
+import com.pampam.wakemeup.toLatLng
 import com.pampam.wakemeup.ui.MainActivity
 import org.koin.android.ext.android.inject
 import java.util.concurrent.TimeUnit
@@ -51,10 +53,19 @@ class LocationService : Service() {
                 Log.d(this::class.simpleName, "onLocationResult(): $result")
 
                 locationRepository.location.value = result.lastLocation
+
+                val session = sessionRepository.currentSession.value
+                val location = locationRepository.location.value
+                if (session?.details != null && session.status == SessionStatus.Active && serviceRunningInForeground) {
+                    if (location != null) {
+                        notificationManager.notify(NOTIFICATION_ID, generateNotification())
+                    }
+                }
             }
 
             override fun onLocationAvailability(result: LocationAvailability) {
                 super.onLocationAvailability(result)
+
 
                 Log.d(this::class.simpleName, "onLocationAvailability(): $result")
 
@@ -163,8 +174,19 @@ class LocationService : Service() {
 
         Log.d(LocationService::class.simpleName, "generateNotification()")
 
-        val mainNotificationText = getString(R.string.notification_main_text)
-        val titleText = getString(R.string.app_name)
+        val station = sessionRepository.currentSession.value!!.details!!.primaryText
+
+        val currentLocation = locationRepository.location.value!!.toLatLng()
+        val destinationLocation = sessionRepository.currentSession.value!!.details!!.latLng
+
+        val distance = SphericalUtil.computeDistanceBetween(destinationLocation, currentLocation)
+
+        val titleText = station
+        val mainNotificationText = String.format(
+            getString(R.string.notification_main_text),
+            distance,
+            getString(R.string.meters_short)
+        )
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 

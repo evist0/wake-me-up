@@ -2,7 +2,7 @@
     <string name="show_me">Покажи меня</string>
     <string name="notification_open">Открыть</string>
     <string name="notification_close">Отменить</string>
-    <string name="notification_main_text">Мы вас разбудим!</string>
+    <string name="notification_main_text">Осталось %1$.0f%2$s</string>
     <string name="popup_accept_text">ОК</string>
     <string name="popup_dismiss_text">Позже</string>
     <string name="location_permission_title">Разрешение местоположения</string>
@@ -11,5 +11,5 @@
     <string name="location_unavailable_message">Ваше местоположение необходимо приложению для функционирования</string>
     <string name="details_awake_button">Разбудить</string>
     <string name="details_cancel_button">Отмена</string>
-    <string name="details_meters_short">м</string>
+    <string name="meters_short">м</string>
 </resources>
