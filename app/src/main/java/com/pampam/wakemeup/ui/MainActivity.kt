@@ -49,6 +49,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
     private val viewModel by viewModel<MainActivityViewModel>()
 
     private lateinit var map: GoogleMap
+
+    /* Я ушёл срать, оцени нейминг :D */
+    private lateinit var camera: DJIMavikPro
+
     private lateinit var destinationMarker: DestinationMarker
     private lateinit var locationMarker: LocationMarker
 
@@ -190,7 +194,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
             }
 
         cameraUpdate?.let {
-            map.animateCamera(it)
+            camera.enqueue(it)
         }
     }
 
@@ -311,12 +315,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
             setOnCameraMoveStartedListener { reason ->
                 when (reason) {
                     GoogleMap.OnCameraMoveStartedListener.REASON_GESTURE -> {
+                        camera.clear()
                         viewModel.isShowMyLocation.value = false
                     }
                 }
             }
         }
 
+
+        initDJMovavik()
         initLocationPermissionPopup()
         initLocationAvailabilityPopup()
         initMyLocationMarker()
@@ -326,33 +333,35 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         initAwakeButton()
         initCancelButton()
 
-        observeHasLocationPermission()
+        observeIsLocationAvailable()
+        observeHasLocationPermissionPopupVisible()
+        observeIsLocationAvailablePopupVisible()
         observeIsFocused()
         observeIsSearching()
         observeSuggestedDestinations()
         observeMyLastLocation()
-        observeIsLocationAvailable()
         observeSession()
     }
 
-    private fun observeHasLocationPermission() {
-        viewModel.hasLocationPermission.observe(this, Observer { hasLocationPermission ->
-            if (hasLocationPermission) {
-                locationPermissionPopup.dismiss()
-            } else {
-                locationPermissionPopup.show()
-            }
+    private fun initDJMovavik() {
+        camera = DJIMavikPro(map)
+    }
+
+    private fun observeHasLocationPermissionPopupVisible() {
+        viewModel.isLocationPermissionPopupVisible.observe(this, Observer { visible ->
+            if (visible) locationPermissionPopup.show() else locationPermissionPopup.dismiss()
         })
     }
 
     private fun observeIsLocationAvailable() {
         viewModel.isLocationAvailable.observe(this, Observer { available ->
             locationMarker.updateLocationAvailable(available)
-            if (available) {
-                locationAvailabilityPopup.dismiss()
-            } else {
-                locationAvailabilityPopup.show()
-            }
+        })
+    }
+
+    private fun observeIsLocationAvailablePopupVisible() {
+        viewModel.isLocationAvailabilityPopupVisible.observe(this, Observer { visible ->
+            if (visible) locationAvailabilityPopup.show() else locationAvailabilityPopup.dismiss()
         })
     }
 
@@ -465,19 +474,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
 
     private fun initMyLocationButton() {
         myLocationButton.setOnClickListener {
-            if (viewModel.hasLocationPermission.value != true) {
-                locationPermissionPopup.show()
-            } else if (viewModel.isLocationAvailable.value == false) {
-                locationAvailabilityPopup.show()
-            } else {
-                val location = viewModel.location.value
-                if (location != null) {
-                    viewModel.isShowMyLocation.value = !viewModel.isShowMyLocation.value!!
-                    if (viewModel.isShowMyLocation.value == true) {
-                        focusCamera()
-                    }
-                }
-            }
+            viewModel.showMyLocation { focusCamera() }
         }
     }
 

@@ -43,6 +43,43 @@ class MainActivityViewModel(
 
     val currentSession: LiveData<Session?> = sessionRepository.currentSession
 
+    private val mIsLocationPermissionPopupVisible = MutableLiveData<Boolean>(false)
+    val isLocationPermissionPopupVisible = MediatorLiveData<Boolean>().apply {
+        addSource(hasLocationPermission, Observer { isHas ->
+            this.value = !isHas
+        })
+
+        addSource(mIsLocationPermissionPopupVisible, Observer { isVisible ->
+            this.value = isVisible
+        })
+    }
+
+    private val mIsLocationAvailabilityPopupVisible = MutableLiveData<Boolean>(false)
+    val isLocationAvailabilityPopupVisible = MediatorLiveData<Boolean>().apply {
+        addSource(isLocationAvailable, Observer { isAvailable ->
+            this.value = !isAvailable
+        })
+
+        addSource(mIsLocationAvailabilityPopupVisible, Observer { isVisible ->
+            this.value = isVisible
+        })
+    }
+
+    fun showMyLocation(focusFunction: () -> Unit) {
+        if (hasLocationPermission.value != true) {
+            mIsLocationPermissionPopupVisible.value = true
+        } else if (isLocationAvailable.value != true) {
+            mIsLocationAvailabilityPopupVisible.value = true
+        } else {
+            if (location.value != null) {
+                isShowMyLocation.value = !isShowMyLocation.value!!
+                if (isShowMyLocation.value == true) {
+                    focusFunction()
+                }
+            }
+        }
+    }
+
     fun beginSearch() {
         mIsSearching.value = true
         destinationSearchQuery.value = ""
