@@ -15,7 +15,9 @@ class DestinationPredictionsAdapter(layoutInflater: LayoutInflater) :
         layoutInflater
     ) {
 
-    inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view)
+    inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val width = view.width
+    }
 
     var onPredictionSelect: (DestinationPrediction) -> Unit = {}
     var onPredictionDelete: (DestinationPrediction) -> Unit = {}

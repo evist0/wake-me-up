@@ -33,8 +33,8 @@ import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.SphericalUtil
 import com.mancj.materialsearchbar.MaterialSearchBar.OnSearchActionListener
 import com.pampam.wakemeup.BuildConfig
+import com.pampam.wakemeup.LocationAlarmService
 import com.pampam.wakemeup.R
-import com.pampam.wakemeup.data.LocationService
 import com.pampam.wakemeup.data.model.SessionRange
 import com.pampam.wakemeup.databinding.ActivityMainBinding
 import com.pampam.wakemeup.toLatLng
@@ -50,8 +50,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
 
     private lateinit var map: GoogleMap
 
-    /* Я ушёл срать, оцени нейминг :D */
-    private lateinit var camera: DJIMavikPro
+    private lateinit var camera: EnqueuedCamera
 
     private lateinit var destinationMarker: DestinationMarker
     private lateinit var locationMarker: LocationMarker
@@ -145,6 +144,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                         radius = session.range.toMeters()
                         isVisible = true
                     }
+
                     focusCamera()
                 }
             } else {
@@ -242,7 +242,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
             }
         }
 
-        val serviceIntent = Intent(this, LocationService::class.java)
+        val serviceIntent = Intent(this, LocationAlarmService::class.java)
         bindService(serviceIntent, locationServiceConnection, Context.BIND_AUTO_CREATE)
     }
 
@@ -323,7 +323,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         }
 
 
-        initDJMovavik()
+        initEnqueuedCamera()
         initLocationPermissionPopup()
         initLocationAvailabilityPopup()
         initMyLocationMarker()
@@ -343,8 +343,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         observeSession()
     }
 
-    private fun initDJMovavik() {
-        camera = DJIMavikPro(map)
+    private fun initEnqueuedCamera() {
+        camera = EnqueuedCamera(map)
     }
 
     private fun observeHasLocationPermissionPopupVisible() {
@@ -486,15 +486,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         viewModel.isShowMyLocation.observe(this, Observer { isFocused ->
             val tint = if (isFocused) {
                 val typedValue = TypedValue()
-                theme.resolveAttribute(R.attr.colorPrimary, typedValue, true)
-                typedValue.data
+                theme.resolveAttribute(R.attr.colorControlActivated, typedValue, true)
+                getColor(typedValue.resourceId)
             } else {
-                getColor(R.color.quantum_grey)
+                val typedValue = TypedValue()
+                theme.resolveAttribute(R.attr.colorControlNormal, typedValue, true)
+                getColor(typedValue.resourceId)
             }
-            myLocationButton.imageTintList = ColorStateList(
-                arrayOf(intArrayOf(android.R.attr.state_enabled)),
-                intArrayOf(tint)
-            )
+            myLocationButton.imageTintList = ColorStateList.valueOf(tint)
         })
     }
 }

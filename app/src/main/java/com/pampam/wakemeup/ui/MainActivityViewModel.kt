@@ -30,7 +30,7 @@ class MainActivityViewModel(
         Transformations.switchMap(isSearching) { isSearching ->
             if (isSearching) {
                 val currentAutocompleteSession =
-                    destinationPredictionRepository.newAutocompleteSession()
+                    autocompleteSession ?: destinationPredictionRepository.newAutocompleteSession()
                 autocompleteSession = currentAutocompleteSession
                 Transformations.switchMap(destinationSearchQuery) { searchQuery ->
                     currentAutocompleteSession.updateQuery(location.value?.toLatLng(), searchQuery)
@@ -45,37 +45,46 @@ class MainActivityViewModel(
 
     private val mIsLocationPermissionPopupVisible = MutableLiveData<Boolean>(false)
     val isLocationPermissionPopupVisible = MediatorLiveData<Boolean>().apply {
-        addSource(hasLocationPermission, Observer { isHas ->
+        addSource(hasLocationPermission) { isHas ->
             this.value = !isHas
-        })
+        }
 
-        addSource(mIsLocationPermissionPopupVisible, Observer { isVisible ->
+        addSource(mIsLocationPermissionPopupVisible) { isVisible ->
             this.value = isVisible
-        })
+        }
     }
 
     private val mIsLocationAvailabilityPopupVisible = MutableLiveData<Boolean>(false)
     val isLocationAvailabilityPopupVisible = MediatorLiveData<Boolean>().apply {
-        addSource(isLocationAvailable, Observer { isAvailable ->
+        addSource(isLocationAvailable) { isAvailable ->
             this.value = !isAvailable
-        })
+        }
 
-        addSource(mIsLocationAvailabilityPopupVisible, Observer { isVisible ->
+        addSource(mIsLocationAvailabilityPopupVisible) { isVisible ->
             this.value = isVisible
-        })
+        }
+    }
+
+    private fun requireLocation(invokable: () -> Unit): Boolean = when {
+        hasLocationPermission.value != true -> {
+            mIsLocationPermissionPopupVisible.value = true
+            false
+        }
+        isLocationAvailable.value != true -> {
+            mIsLocationAvailabilityPopupVisible.value = true
+            false
+        }
+        else -> {
+            invokable()
+            true
+        }
     }
 
     fun showMyLocation(focusFunction: () -> Unit) {
-        if (hasLocationPermission.value != true) {
-            mIsLocationPermissionPopupVisible.value = true
-        } else if (isLocationAvailable.value != true) {
-            mIsLocationAvailabilityPopupVisible.value = true
-        } else {
-            if (location.value != null) {
-                isShowMyLocation.value = !isShowMyLocation.value!!
-                if (isShowMyLocation.value == true) {
-                    focusFunction()
-                }
+        requireLocation {
+            isShowMyLocation.value = !isShowMyLocation.value!!
+            if (isShowMyLocation.value == true) {
+                focusFunction()
             }
         }
     }
@@ -96,9 +105,14 @@ class MainActivityViewModel(
 
         val detailsLiveData = autocompleteSession!!.fetchDetails(prediction)
         detailsLiveData.observeOnce(Observer { details ->
-            sessionRepository.currentSession.value =
-                Session(details, SessionStatus.Inactive, SessionRange.Default)
+            val previousSession = currentSession.value
+            if (previousSession != null) {
+                sessionRepository.currentSession.value =
+                    Session(details, SessionStatus.Inactive, SessionRange.Default)
+            }
         })
+
+        autocompleteSession = null
     }
 
     fun deleteRecentPrediction(prediction: DestinationPrediction) {
@@ -106,15 +120,27 @@ class MainActivityViewModel(
     }
 
     fun setSessionRange(range: SessionRange) {
-        sessionRepository.currentSession.value = currentSession.value!!.mutated(range)
+        sessionRepository.currentSession.value = currentSession.value!!.edit(range)
     }
 
     fun setSessionActive() {
-        sessionRepository.currentSession.value =
-            currentSession.value!!.mutated(SessionStatus.Active)
+        requireLocation {
+            sessionRepository.currentSession.value =
+                currentSession.value!!.edit(SessionStatus.Active)
+        }
     }
 
     fun cancelSession() {
         sessionRepository.currentSession.value = null
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+
+        isLocationAvailabilityPopupVisible.removeSource(isLocationAvailable)
+        isLocationAvailabilityPopupVisible.removeSource(mIsLocationAvailabilityPopupVisible)
+
+        isLocationPermissionPopupVisible.removeSource(hasLocationPermission)
+        isLocationPermissionPopupVisible.removeSource(mIsLocationPermissionPopupVisible)
     }
 }

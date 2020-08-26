@@ -1,5 +1,6 @@
 package com.pampam.wakemeup.data
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
@@ -21,6 +22,9 @@ import com.pampam.wakemeup.data.model.DestinationPrediction
 import com.pampam.wakemeup.data.model.DestinationPredictionSource
 import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.schedulers.Schedulers
+import java.util.concurrent.TimeUnit
+
+const val REMOTE_TOKEN_MIN_QUERY_LENGTH_INSTANTIATION = 3
 
 class DestinationPredictionRepository(
     private val recentDestinationDao: RecentDestinationDao,
@@ -39,6 +43,22 @@ class DestinationPredictionRepository(
             Transformations.switchMap(_queryOriginLiveData) { value ->
                 val query = value.first
                 val origin = value.second
+
+                // не создаём токена пока размер запроса не перевалит
+                // что позволяет экономить деньги
+                // больше денег больше польза
+                // 5 правил настоящего еврея
+                // 1. Хорошо пожрать
+                // 2. Хорошо посрать
+                // 3. Хорошо поспать
+                // 4. Хорошо поебать
+                // 5. Хорошо набеать
+                if (!tokenDelegate.isInitialized() &&
+                    query.length < REMOTE_TOKEN_MIN_QUERY_LENGTH_INSTANTIATION
+                ) {
+                    return@switchMap MutableLiveData<List<AutocompletePrediction>>(emptyList())
+                }
+
                 val request =
                     FindAutocompletePredictionsRequest.builder().apply {
                         if (origin != null) {
@@ -75,7 +95,14 @@ class DestinationPredictionRepository(
             }
         val autocompletionLiveData: LiveData<List<DestinationPrediction>> = _autocompletionLiveData
 
-        private var token: AutocompleteSessionToken? = AutocompleteSessionToken.newInstance()
+        private val tokenDelegate = lazy {
+            Log.d(
+                DestinationPredictionRepository::class.simpleName,
+                "Acquiring new AutocompleteSessionRemoteToken"
+            )
+            AutocompleteSessionToken.newInstance()
+        }
+        private val token by tokenDelegate
 
         fun updateQuery(origin: LatLng?, query: String) {
             _queryOriginLiveData.value = Pair(query, origin)
@@ -84,35 +111,70 @@ class DestinationPredictionRepository(
         fun fetchDetails(prediction: DestinationPrediction): LiveData<DestinationDetails> {
             val destinationDetailsLiveData = MutableLiveData<DestinationDetails>()
 
-            val fields = listOf(Place.Field.LAT_LNG)
-            val request = FetchPlaceRequest.builder(prediction.placeId, fields).apply {
-                setSessionToken(token)
-                token = null
-            }.build()
-            placesClient.fetchPlace(request).addOnSuccessListener { response ->
-                val latLng = response.place.latLng!!
-
-                Flowable.just(recentDestinationDao)
-                    .subscribeOn(Schedulers.io())
-                    .subscribe {
-                        it.insertRecentDestination(
-                            RecentDestinationEntity(
-                                prediction.placeId,
-                                prediction.primaryText,
-                                prediction.secondaryText,
-                                latitude = latLng.latitude,
-                                longitude = latLng.longitude
-                            )
-                        )
-                    }
-
-                destinationDetailsLiveData.value = DestinationDetails(
-                    prediction.placeId,
-                    prediction.primaryText,
-                    prediction.secondaryText,
-                    latLng
+            val fetchDetailsFromDao = { dao: RecentDestinationDao ->
+                val entity = dao.getRecentDestinationById(prediction.placeId)
+                destinationDetailsLiveData.postValue(
+                    DestinationDetails(
+                        entity.placeId,
+                        entity.primaryText,
+                        entity.secondaryText,
+                        LatLng(entity.latitude, entity.longitude)
+                    )
                 )
             }
+
+            val fetchDetailsFromRemote = { dao: RecentDestinationDao ->
+                val fields = listOf(Place.Field.LAT_LNG)
+                val request = FetchPlaceRequest.builder(prediction.placeId, fields).apply {
+                    setSessionToken(token)
+                }.build()
+                placesClient.fetchPlace(request).addOnSuccessListener { response ->
+                    val latLng = response.place.latLng!!
+
+                    // хоть мы и добавляем колбек на io потоке
+                    // но он будет вызван на main потоке поэтому еще разок ага
+                    Flowable.just(dao)
+                        .subscribeOn(Schedulers.io())
+                        .subscribe { dao ->
+                            dao.insertRecentDestination(
+                                RecentDestinationEntity(
+                                    prediction.placeId,
+                                    prediction.primaryText,
+                                    prediction.secondaryText,
+                                    latitude = latLng.latitude,
+                                    longitude = latLng.longitude
+                                )
+                            )
+                        }
+
+                    destinationDetailsLiveData.value = DestinationDetails(
+                        prediction.placeId,
+                        prediction.primaryText,
+                        prediction.secondaryText,
+                        latLng
+                    )
+                }
+            }
+
+            // Не обращаемся к Places API если place уже есть в бд
+            Flowable.just(recentDestinationDao)
+                .subscribeOn(Schedulers.io())
+                .delay(1000, TimeUnit.MILLISECONDS, Schedulers.io()) //TODO: убрать когда заебёт
+                .subscribe { dao ->
+                    if (dao.isDestinationExistsById(prediction.placeId)) {
+                        Log.d(
+                            DestinationPredictionRepository::class.simpleName,
+                            "Fetching from DAO"
+                        )
+                        fetchDetailsFromDao(dao)
+                    } else {
+                        Log.d(
+                            DestinationPredictionRepository::class.simpleName,
+                            "Fetching from REMOTE"
+                        )
+                        fetchDetailsFromRemote(dao)
+                    }
+                }
 
             return destinationDetailsLiveData
         }

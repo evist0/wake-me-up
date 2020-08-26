@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/destinationItem"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -8,7 +9,8 @@
     android:clickable="true"
     android:focusable="true"
     android:gravity="center_vertical"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    app:layout_constraintWidth_default="spread">
 
     <ImageView
         android:id="@+id/recentImageView"
@@ -17,7 +19,10 @@
         android:contentDescription=""
         android:padding="13dp"
         android:src="@drawable/ic_history_black_48dp"
-        app:tint="@color/quantum_grey" />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="?attr/colorControlNormal" />
 
     <ImageView
         android:id="@+id/remoteImageView"
@@ -26,32 +31,47 @@
         android:contentDescription=""
         android:padding="13dp"
         android:src="@drawable/ic_baseline_location_on_24"
-        app:tint="@color/quantum_grey" />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toRightOf="@id/recentImageView"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="?attr/colorControlNormal"
+        tools:visibility="gone" />
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/textLayout"
         android:layout_width="0dp"
-        android:layout_weight="1"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toRightOf="@id/remoteImageView"
+        app:layout_constraintRight_toLeftOf="@id/deleteImageView"
+        app:layout_constraintTop_toTopOf="parent">
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/primaryText"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text=""
-            android:textAppearance="?android:attr/textAppearanceSmall" />
+            android:text="Станция островская"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            app:layout_constraintBottom_toTopOf="@id/secondaryText"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:ignore="HardcodedText" />
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/secondaryText"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text=""
+            android:text="Россия, Новокузнецк"
             android:textAppearance="?android:attr/textAppearanceSmall"
-            android:textColor="@android:color/darker_gray" />
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/primaryText"
+            tools:ignore="HardcodedText" />
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <ImageView
         android:id="@+id/deleteImageView"
@@ -61,5 +81,8 @@
         android:contentDescription=""
         android:padding="13dp"
         android:src="@drawable/ic_close_black_48dp"
-        app:tint="@color/quantum_grey" />
-</LinearLayout>
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="?attr/colorControlNormal" />
+</androidx.constraintlayout.widget.ConstraintLayout>

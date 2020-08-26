@@ -6,11 +6,11 @@ data class Session(
     val range: SessionRange = SessionRange.Default
 )
 
-fun Session.mutated(details: DestinationDetails?): Session =
+fun Session.edit(details: DestinationDetails?): Session =
     Session(details, status, range)
 
-fun Session.mutated(status: SessionStatus): Session =
+fun Session.edit(status: SessionStatus): Session =
     Session(details, status, range)
 
-fun Session.mutated(range: SessionRange): Session =
+fun Session.edit(range: SessionRange): Session =
     Session(details, status, range)

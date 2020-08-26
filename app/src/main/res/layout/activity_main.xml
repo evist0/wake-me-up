@@ -57,15 +57,15 @@
                 app:fabCustomSize="50dp"
                 app:layout_constraintBottom_toTopOf="@id/searchDetailsLayout"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:tint="@color/quantum_grey" />
+                app:tint="?attr/colorControlNormal" />
 
             <FrameLayout
                 android:id="@+id/searchDetailsLayout"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent">
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent">
 
                 <androidx.cardview.widget.CardView
                     android:id="@+id/detailsCardView"
@@ -86,57 +86,76 @@
                         android:paddingEnd="16dp"
                         android:paddingBottom="0dp">
 
-                        <com.google.android.material.textview.MaterialTextView
-                            android:id="@+id/detailsPrimaryText"
+                        <FrameLayout
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@{viewModel.currentSession.details.primaryText}"
-                            android:textAlignment="center"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
-                            app:layout_constraintTop_toTopOf="parent" />
-
-                        <com.google.android.material.textview.MaterialTextView
-                            android:id="@+id/detailsSecondaryText"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@{viewModel.currentSession.details.secondaryText}"
-                            android:textAlignment="center"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
-                            app:layout_constraintTop_toBottomOf="@id/detailsPrimaryText" />
-
-                        <com.google.android.material.chip.ChipGroup
-                            android:id="@+id/detailsDistanceChipGroup"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="16dp"
+                            android:layout_height="match_parent"
                             app:layout_constraintBottom_toTopOf="@id/detailsButtonsLayout"
-                            app:layout_constraintLeft_toLeftOf="parent"
-                            app:layout_constraintRight_toRightOf="parent"
-                            app:layout_constraintTop_toBottomOf="@id/detailsSecondaryText"
-                            app:selectionRequired="true"
-                            app:singleSelection="true">
+                            app:layout_constraintTop_toTopOf="parent">
 
-                            <com.google.android.material.chip.Chip
-                                android:id="@+id/nearDistanceChip"
-                                style="@style/Widget.MaterialComponents.Chip.Choice"
-                                android:layout_width="wrap_content"
+                            <androidx.constraintlayout.widget.ConstraintLayout
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text='@{String.format("%.0f%s", SessionRange.Near.toMeters(), @string/meters_short)}' />
+                                android:visibility="@{viewModel.currentSession.status == SessionStatus.Fetching ? View.GONE : View.VISIBLE}">
 
-                            <com.google.android.material.chip.Chip
-                                android:id="@+id/defaultDistanceChip"
-                                style="@style/Widget.MaterialComponents.Chip.Choice"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text='@{String.format("%.0f%s", SessionRange.Default.toMeters(), @string/meters_short)}' />
+                                <com.google.android.material.textview.MaterialTextView
+                                    android:id="@+id/detailsPrimaryText"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="@{viewModel.currentSession.details.primaryText}"
+                                    android:textAlignment="center"
+                                    android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
+                                    app:layout_constraintTop_toTopOf="parent" />
 
-                            <com.google.android.material.chip.Chip
-                                android:id="@+id/farDistanceChip"
-                                style="@style/Widget.MaterialComponents.Chip.Choice"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text='@{String.format("%.0f%s", SessionRange.Far.toMeters(), @string/meters_short)}' />
-                        </com.google.android.material.chip.ChipGroup>
+                                <com.google.android.material.textview.MaterialTextView
+                                    android:id="@+id/detailsSecondaryText"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="@{viewModel.currentSession.details.secondaryText}"
+                                    android:textAlignment="center"
+                                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                                    app:layout_constraintTop_toBottomOf="@id/detailsPrimaryText" />
+
+                                <com.google.android.material.chip.ChipGroup
+                                    android:id="@+id/detailsDistanceChipGroup"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="16dp"
+                                    app:layout_constraintBottom_toBottomOf="parent"
+                                    app:layout_constraintLeft_toLeftOf="parent"
+                                    app:layout_constraintRight_toRightOf="parent"
+                                    app:layout_constraintTop_toBottomOf="@id/detailsSecondaryText"
+                                    app:selectionRequired="true"
+                                    app:singleSelection="true">
+
+                                    <com.google.android.material.chip.Chip
+                                        android:id="@+id/nearDistanceChip"
+                                        style="@style/Widget.MaterialComponents.Chip.Choice"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text='@{String.format("%.0f%s", SessionRange.Near.toMeters(), @string/meters_short)}' />
+
+                                    <com.google.android.material.chip.Chip
+                                        android:id="@+id/defaultDistanceChip"
+                                        style="@style/Widget.MaterialComponents.Chip.Choice"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text='@{String.format("%.0f%s", SessionRange.Default.toMeters(), @string/meters_short)}' />
+
+                                    <com.google.android.material.chip.Chip
+                                        android:id="@+id/farDistanceChip"
+                                        style="@style/Widget.MaterialComponents.Chip.Choice"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text='@{String.format("%.0f%s", SessionRange.Far.toMeters(), @string/meters_short)}' />
+                                </com.google.android.material.chip.ChipGroup>
+                            </androidx.constraintlayout.widget.ConstraintLayout>
+
+                            <ProgressBar
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:padding="32dp"
+                                android:visibility="@{viewModel.currentSession.status == SessionStatus.Fetching ? View.VISIBLE : View.GONE}" />
+                        </FrameLayout>
 
                         <LinearLayout
                             android:id="@+id/detailsButtonsLayout"
@@ -151,6 +170,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
+                                android:enabled="@{viewModel.currentSession.status != SessionStatus.Fetching ? true : false}"
                                 android:text="@string/details_awake_button"
                                 android:visibility="@{viewModel.currentSession.status != SessionStatus.Active ? View.VISIBLE : View.GONE}" />
 
@@ -182,6 +202,9 @@
                     app:mt_borderlessRippleEnabled="false"
                     app:mt_hint="ДК &quot; Металлург &quot;"
                     app:mt_maxSuggestionsCount="10"
+                    app:mt_backIconTint="?attr/colorControlNormal"
+                    app:mt_clearIconTint="?attr/colorControlNormal"
+                    app:mt_searchIconTint="?attr/colorControlNormal"
                     app:mt_placeholder="Введите название остановки"
                     app:mt_roundedSearchBarEnabled="true"
                     app:mt_speechMode="false"
