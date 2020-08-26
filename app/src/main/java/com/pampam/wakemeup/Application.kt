@@ -3,7 +3,7 @@ package com.pampam.wakemeup
 import android.app.Application
 import androidx.room.Room
 import com.google.android.libraries.places.api.Places
-import com.pampam.wakemeup.data.DestinationPredictionRepository
+import com.pampam.wakemeup.data.DestinationRepository
 import com.pampam.wakemeup.data.LocationRepository
 import com.pampam.wakemeup.data.SessionRepository
 import com.pampam.wakemeup.data.db.AppDatabase
@@ -30,7 +30,7 @@ class Application : Application() {
         val appModule = module {
             single { Places.createClient(this@Application) }
             single { appDatabase.getLastDestinationDao() }
-            single { DestinationPredictionRepository(get(), get()) }
+            single { DestinationRepository(get(), get()) }
 
             single { LocationRepository() }
 

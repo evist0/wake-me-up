@@ -151,21 +151,6 @@
   },
   {
     "featureType": "poi",
-    "elementType": "labels.icon",
-    "stylers": [
-      {
-        "saturation": -30
-      },
-      {
-        "lightness": -55
-      },
-      {
-        "visibility": "simplified"
-      }
-    ]
-  },
-  {
-    "featureType": "poi",
     "elementType": "labels.text.fill",
     "stylers": [
       {
@@ -290,6 +275,24 @@
       {
         "color": "#3d3d3d"
       },
+      {
+        "visibility": "on"
+      }
+    ]
+  },
+  {
+    "featureType": "poi",
+    "elementType": "labels.icon",
+    "stylers": [
+      {
+        "visibility": "off"
+      }
+    ]
+  },
+  {
+    "featureType": "transit",
+    "elementType": "labels.icon",
+    "stylers": [
       {
         "visibility": "on"
       }

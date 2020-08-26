@@ -52,7 +52,6 @@
                 android:contentDescription="@string/show_me"
                 android:longClickable="false"
                 android:src="@drawable/ic_baseline_near_me_24"
-                android:visibility="@{viewModel.currentSession == null ? View.VISIBLE : View.GONE}"
                 app:backgroundTint="?attr/colorBackgroundFloating"
                 app:fabCustomSize="50dp"
                 app:layout_constraintBottom_toTopOf="@id/searchDetailsLayout"

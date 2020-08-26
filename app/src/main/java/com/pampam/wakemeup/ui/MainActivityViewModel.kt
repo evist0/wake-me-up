@@ -2,7 +2,8 @@ package com.pampam.wakemeup.ui
 
 import android.location.Location
 import androidx.lifecycle.*
-import com.pampam.wakemeup.data.DestinationPredictionRepository
+import com.google.android.gms.maps.model.PointOfInterest
+import com.pampam.wakemeup.data.DestinationRepository
 import com.pampam.wakemeup.data.LocationRepository
 import com.pampam.wakemeup.data.SessionRepository
 import com.pampam.wakemeup.data.model.*
@@ -11,7 +12,7 @@ import com.pampam.wakemeup.toLatLng
 
 class MainActivityViewModel(
     locationRepository: LocationRepository,
-    private val destinationPredictionRepository: DestinationPredictionRepository,
+    private val destinationRepository: DestinationRepository,
     private val sessionRepository: SessionRepository
 ) : ViewModel() {
 
@@ -25,12 +26,12 @@ class MainActivityViewModel(
 
     val destinationSearchQuery = MutableLiveData<String>()
 
-    private var autocompleteSession: DestinationPredictionRepository.AutocompleteSession? = null
+    private var autocompleteSession: DestinationRepository.AutocompleteSession? = null
     val suggestedDestinations: LiveData<List<DestinationPrediction>> =
         Transformations.switchMap(isSearching) { isSearching ->
             if (isSearching) {
                 val currentAutocompleteSession =
-                    autocompleteSession ?: destinationPredictionRepository.newAutocompleteSession()
+                    autocompleteSession ?: destinationRepository.newAutocompleteSession()
                 autocompleteSession = currentAutocompleteSession
                 Transformations.switchMap(destinationSearchQuery) { searchQuery ->
                     currentAutocompleteSession.updateQuery(location.value?.toLatLng(), searchQuery)
@@ -116,7 +117,7 @@ class MainActivityViewModel(
     }
 
     fun deleteRecentPrediction(prediction: DestinationPrediction) {
-        destinationPredictionRepository.deleteRecentDestinationById(prediction.placeId)
+        destinationRepository.deleteRecentDestinationById(prediction.placeId)
     }
 
     fun setSessionRange(range: SessionRange) {
@@ -132,6 +133,19 @@ class MainActivityViewModel(
 
     fun cancelSession() {
         sessionRepository.currentSession.value = null
+    }
+
+    fun clickPoi(poi: PointOfInterest) {
+        sessionRepository.currentSession.value = Session()
+
+        val detailsLiveData = destinationRepository.fetchDetails(poi)
+        detailsLiveData.observeOnce(Observer { details ->
+            val previousSession = currentSession.value
+            if (previousSession != null) {
+                sessionRepository.currentSession.value =
+                    Session(details, SessionStatus.Inactive, SessionRange.Default)
+            }
+        })
     }
 
     override fun onCleared() {

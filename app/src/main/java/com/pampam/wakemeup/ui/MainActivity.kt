@@ -129,8 +129,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
             if (session != null) {
                 viewModel.isShowMyLocation.value = false
 
-                map.uiSettings.setAllGesturesEnabled(false)
-
                 val distanceChipId = when (session.range) {
                     SessionRange.Default -> R.id.defaultDistanceChip
                     SessionRange.Near -> R.id.nearDistanceChip
@@ -148,8 +146,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                     focusCamera()
                 }
             } else {
-                map.uiSettings.setAllGesturesEnabled(true)
-
                 destinationMarker.apply {
                     isVisible = false
                 }
@@ -319,6 +315,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                         viewModel.isShowMyLocation.value = false
                     }
                 }
+            }
+
+            setOnPoiClickListener { poi ->
+                viewModel.clickPoi(poi)
             }
         }
 

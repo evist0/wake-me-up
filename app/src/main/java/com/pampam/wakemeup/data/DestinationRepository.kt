@@ -6,6 +6,7 @@ import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.PointOfInterest
 import com.google.android.libraries.places.api.model.AutocompletePrediction
 import com.google.android.libraries.places.api.model.AutocompleteSessionToken
 import com.google.android.libraries.places.api.model.Place
@@ -25,7 +26,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers
 
 const val REMOTE_TOKEN_MIN_QUERY_LENGTH_INSTANTIATION = 3
 
-class DestinationPredictionRepository(
+class DestinationRepository(
     private val recentDestinationDao: RecentDestinationDao,
     private val placesClient: PlacesClient
 ) {
@@ -96,85 +97,19 @@ class DestinationPredictionRepository(
 
         private val tokenDelegate = lazy {
             Log.d(
-                DestinationPredictionRepository::class.simpleName,
+                DestinationRepository::class.simpleName,
                 "Acquiring new AutocompleteSessionRemoteToken"
             )
             AutocompleteSessionToken.newInstance()
         }
-        private val token by tokenDelegate
+        val token by tokenDelegate
 
         fun updateQuery(origin: LatLng?, query: String) {
             _queryOriginLiveData.value = Pair(query, origin)
         }
 
         fun fetchDetails(prediction: DestinationPrediction): LiveData<DestinationDetails> {
-            val destinationDetailsLiveData = MutableLiveData<DestinationDetails>()
-
-            val fetchDetailsFromDao = { dao: RecentDestinationDao ->
-                val entity = dao.getRecentDestinationById(prediction.placeId)
-                destinationDetailsLiveData.postValue(
-                    DestinationDetails(
-                        entity.placeId,
-                        entity.primaryText,
-                        entity.secondaryText,
-                        LatLng(entity.latitude, entity.longitude)
-                    )
-                )
-            }
-
-            val fetchDetailsFromRemote = { dao: RecentDestinationDao ->
-                val fields = listOf(Place.Field.LAT_LNG)
-                val request = FetchPlaceRequest.builder(prediction.placeId, fields).apply {
-                    setSessionToken(token)
-                }.build()
-                placesClient.fetchPlace(request).addOnSuccessListener { response ->
-                    val latLng = response.place.latLng!!
-
-                    // хоть мы и добавляем колбек на io потоке
-                    // но он будет вызван на main потоке поэтому еще разок ага
-                    Flowable.just(dao)
-                        .subscribeOn(Schedulers.io())
-                        .subscribe { dao ->
-                            dao.insertRecentDestination(
-                                RecentDestinationEntity(
-                                    prediction.placeId,
-                                    prediction.primaryText,
-                                    prediction.secondaryText,
-                                    latitude = latLng.latitude,
-                                    longitude = latLng.longitude
-                                )
-                            )
-                        }
-
-                    destinationDetailsLiveData.value = DestinationDetails(
-                        prediction.placeId,
-                        prediction.primaryText,
-                        prediction.secondaryText,
-                        latLng
-                    )
-                }
-            }
-
-            // Не обращаемся к Places API если place уже есть в бд
-            Flowable.just(recentDestinationDao)
-                .subscribeOn(Schedulers.io())
-                .subscribe { dao ->
-                    if (dao.isDestinationExistsById(prediction.placeId)) {
-                        Log.d(
-                            DestinationPredictionRepository::class.simpleName,
-                            "Fetching from DAO"
-                        )
-                        fetchDetailsFromDao(dao)
-                    } else {
-                        Log.d(
-                            DestinationPredictionRepository::class.simpleName,
-                            "Fetching from REMOTE"
-                        )
-                        fetchDetailsFromRemote(dao)
-                    }
-                }
-
-            return destinationDetailsLiveData
+            return fetchDetails(prediction.placeId, this)
         }
 
         private fun updateAutocompletion(
@@ -227,7 +162,98 @@ class DestinationPredictionRepository(
                     DestinationPredictionSource.Recent
                 )
             }
+    }
 
+    private fun fetchDetails(
+        placeId: String,
+        session: AutocompleteSession?
+    ): LiveData<DestinationDetails> {
+
+        val destinationDetailsLiveData = MutableLiveData<DestinationDetails>()
+
+        val fetchDetailsFromDao = { dao: RecentDestinationDao ->
+            val entity = dao.getRecentDestinationById(placeId)
+            destinationDetailsLiveData.postValue(
+                DestinationDetails(
+                    entity.placeId,
+                    entity.primaryText,
+                    entity.secondaryText,
+                    LatLng(entity.latitude, entity.longitude)
+                )
+            )
+        }
+
+        val fetchDetailsFromRemote = { dao: RecentDestinationDao ->
+            val fields = listOf(
+                Place.Field.LAT_LNG,
+                Place.Field.NAME,
+                Place.Field.ADDRESS_COMPONENTS,
+                Place.Field.TYPES
+            )
+
+            val request = FetchPlaceRequest.builder(placeId, fields).apply {
+                session?.let { setSessionToken(it.token) }
+            }.build()
+
+            placesClient.fetchPlace(request).addOnSuccessListener { response ->
+                if (response.place.types?.contains(Place.Type.TRANSIT_STATION) != true) {
+                    return@addOnSuccessListener
+                }
+
+                val addressComponents = response.place.addressComponents!!.asList()
+
+                val address = "${addressComponents[1].name}, ${addressComponents[0].name}"
+                val latLng = response.place.latLng!!
+
+                // хоть мы и добавляем колбек на io потоке
+                // но он будет вызван на main потоке поэтому еще разок ага
+                Flowable.just(dao)
+                    .subscribeOn(Schedulers.io())
+                    .subscribe { dao ->
+                        dao.insertRecentDestination(
+                            RecentDestinationEntity(
+                                placeId,
+                                response.place.name!!,
+                                address,
+                                latitude = latLng.latitude,
+                                longitude = latLng.longitude
+                            )
+                        )
+                    }
+
+                destinationDetailsLiveData.value = DestinationDetails(
+                    placeId,
+                    response.place.name!!,
+                    address,
+                    latLng
+                )
+            }
+        }
+
+        // Не обращаемся к Places API если place уже есть в бд
+        Flowable.just(recentDestinationDao)
+            .subscribeOn(Schedulers.io())
+            .subscribe { dao ->
+                if (dao.isDestinationExistsById(placeId)) {
+                    Log.d(
+                        DestinationRepository::class.simpleName,
+                        "Fetching from DAO"
+                    )
+                    fetchDetailsFromDao(dao)
+                } else {
+                    Log.d(
+                        DestinationRepository::class.simpleName,
+                        "Fetching from REMOTE"
+                    )
+                    fetchDetailsFromRemote(dao)
+                }
+            }
+
+        return destinationDetailsLiveData
+    }
+
+    fun fetchDetails(poi: PointOfInterest): LiveData<DestinationDetails> {
+        return fetchDetails(poi.placeId, null)
     }
 
     fun newAutocompleteSession(): AutocompleteSession {
