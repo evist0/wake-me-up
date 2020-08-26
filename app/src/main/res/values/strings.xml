@@ -17,4 +17,6 @@
     <string name="notification_near">You are near</string>
     <string name="notification_channel_info_name">Distance</string>
     <string name="notification_channel_alarm_name">Alarm</string>
+    <string name="alarm_title">Your destination</string>
+    <string name="alarm_accept">Thank you!</string>
 </resources>

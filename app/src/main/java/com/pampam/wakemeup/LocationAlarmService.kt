@@ -19,6 +19,7 @@ import com.pampam.wakemeup.data.LocationRepository
 import com.pampam.wakemeup.data.SessionRepository
 import com.pampam.wakemeup.data.model.Session
 import com.pampam.wakemeup.data.model.SessionStatus
+import com.pampam.wakemeup.ui.AlarmActivity
 import com.pampam.wakemeup.ui.MainActivity
 import org.koin.android.ext.android.inject
 import java.util.concurrent.TimeUnit
@@ -167,6 +168,7 @@ class LocationAlarmService : Service() {
         Log.d(LocationAlarmService::class.simpleName, "onDestroy()")
 
         stopForeground()
+        mediaPlayer.release()
         unsubscribeToLocation()
         locationRepository.hasLocationPermission.removeObserver(hasLocationPermissionObserver)
         sessionRepository.currentSession.removeObserver(sessionObserver)
@@ -334,7 +336,7 @@ class LocationAlarmService : Service() {
         val text = getString(R.string.notification_near)
 
         val fullScreenIntent = {
-            val intent = Intent(this, MainActivity::class.java)
+            val intent = Intent(this, AlarmActivity::class.java)
             PendingIntent.getActivity(this, 0, intent, 0)
         }()
 

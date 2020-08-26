@@ -21,6 +21,10 @@
             android:value="@string/google_maps_key" />
 
         <activity
+            android:name=".ui.AlarmActivity"
+            android:launchMode="singleTop"
+            android:theme="@style/AlarmTheme" />
+        <activity
             android:name=".ui.MainActivity"
             android:launchMode="singleTop">
             <intent-filter>

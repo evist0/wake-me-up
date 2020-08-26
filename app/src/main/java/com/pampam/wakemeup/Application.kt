@@ -7,6 +7,7 @@ import com.pampam.wakemeup.data.DestinationPredictionRepository
 import com.pampam.wakemeup.data.LocationRepository
 import com.pampam.wakemeup.data.SessionRepository
 import com.pampam.wakemeup.data.db.AppDatabase
+import com.pampam.wakemeup.ui.AlarmActivityViewModel
 import com.pampam.wakemeup.ui.MainActivityViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -36,6 +37,7 @@ class Application : Application() {
             single { SessionRepository() }
 
             viewModel { MainActivityViewModel(get(), get(), get()) }
+            viewModel { AlarmActivityViewModel(get()) }
         }
 
         startKoin {

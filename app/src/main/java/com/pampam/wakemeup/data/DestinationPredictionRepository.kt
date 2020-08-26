@@ -22,7 +22,6 @@ import com.pampam.wakemeup.data.model.DestinationPrediction
 import com.pampam.wakemeup.data.model.DestinationPredictionSource
 import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.schedulers.Schedulers
-import java.util.concurrent.TimeUnit
 
 const val REMOTE_TOKEN_MIN_QUERY_LENGTH_INSTANTIATION = 3
 
@@ -52,7 +51,7 @@ class DestinationPredictionRepository(
                 // 2. Хорошо посрать
                 // 3. Хорошо поспать
                 // 4. Хорошо поебать
-                // 5. Хорошо набеать
+                // 5. Хорошо наебать
                 if (!tokenDelegate.isInitialized() &&
                     query.length < REMOTE_TOKEN_MIN_QUERY_LENGTH_INSTANTIATION
                 ) {
@@ -159,7 +158,6 @@ class DestinationPredictionRepository(
             // Не обращаемся к Places API если place уже есть в бд
             Flowable.just(recentDestinationDao)
                 .subscribeOn(Schedulers.io())
-                .delay(1000, TimeUnit.MILLISECONDS, Schedulers.io()) //TODO: убрать когда заебёт
                 .subscribe { dao ->
                     if (dao.isDestinationExistsById(prediction.placeId)) {
                         Log.d(

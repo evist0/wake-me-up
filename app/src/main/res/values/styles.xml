@@ -16,6 +16,10 @@
         <item name="android:windowTranslucentNavigation">true</item>
     </style>
 
+    <style name="AlarmTheme" parent="AppTheme">
+        <item name="android:windowFullscreen">true</item>
+    </style>
+
     <style name="TextButton" parent="Widget.MaterialComponents.Button.TextButton">
         <item name="android:textAppearance">@style/TextAppearance.AppCompat.Body2</item>
     </style>

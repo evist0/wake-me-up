@@ -15,4 +15,6 @@
     <string name="notification_near">Вы рядом</string>
     <string name="notification_channel_info_name">Расстояние</string>
     <string name="notification_channel_alarm_name">Будильник</string>
+    <string name="alarm_title">Ваша остановка</string>
+    <string name="alarm_accept">Уже выхожу!</string>
 </resources>
