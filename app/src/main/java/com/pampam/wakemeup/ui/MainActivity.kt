@@ -35,7 +35,6 @@ import com.mancj.materialsearchbar.MaterialSearchBar.OnSearchActionListener
 import com.pampam.wakemeup.BuildConfig
 import com.pampam.wakemeup.LocationAlarmService
 import com.pampam.wakemeup.R
-import com.pampam.wakemeup.data.model.SessionRange
 import com.pampam.wakemeup.databinding.ActivityMainBinding
 import com.pampam.wakemeup.toLatLng
 import kotlinx.android.synthetic.main.activity_main.*
@@ -95,46 +94,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         })
     }
 
-    private fun initCancelButton() {
-        cancelButton.setOnClickListener {
-            viewModel.cancelSession()
-        }
-    }
-
-    private fun initAwakeButton() {
-        awakeButton.setOnClickListener {
-            viewModel.setSessionActive()
-        }
-    }
-
-    private fun initDistanceChipGroup() {
-        detailsDistanceChipGroup.setOnCheckedChangeListener { _, checkedId ->
-            val session = viewModel.currentSession.value
-            if (session != null) {
-                val range = when (checkedId) {
-                    R.id.defaultDistanceChip -> SessionRange.Default
-                    R.id.nearDistanceChip -> SessionRange.Near
-                    R.id.farDistanceChip -> SessionRange.Far
-                    else -> null
-                }
-                if (range != null) {
-                    viewModel.setSessionRange(range)
-                }
-            }
-        }
-    }
-
     private fun observeSession() {
         viewModel.currentSession.observe(this, Observer { session ->
             if (session != null) {
                 viewModel.isShowMyLocation.value = false
-
-                val distanceChipId = when (session.range) {
-                    SessionRange.Default -> R.id.defaultDistanceChip
-                    SessionRange.Near -> R.id.nearDistanceChip
-                    SessionRange.Far -> R.id.farDistanceChip
-                }
-                detailsDistanceChipGroup.check(distanceChipId)
 
                 if (session.details != null) {
                     destinationMarker.apply {
@@ -329,9 +292,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         initMyLocationMarker()
         initMyLocationButton()
         initSearchDetailsLayout()
-        initDistanceChipGroup()
-        initAwakeButton()
-        initCancelButton()
 
         observeIsLocationAvailable()
         observeHasLocationPermissionPopupVisible()

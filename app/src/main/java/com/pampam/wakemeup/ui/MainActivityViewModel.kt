@@ -6,7 +6,10 @@ import com.google.android.gms.maps.model.PointOfInterest
 import com.pampam.wakemeup.data.DestinationRepository
 import com.pampam.wakemeup.data.LocationRepository
 import com.pampam.wakemeup.data.SessionRepository
-import com.pampam.wakemeup.data.model.*
+import com.pampam.wakemeup.data.model.DestinationPrediction
+import com.pampam.wakemeup.data.model.Session
+import com.pampam.wakemeup.data.model.SessionRange
+import com.pampam.wakemeup.data.model.SessionStatus
 import com.pampam.wakemeup.observeOnce
 import com.pampam.wakemeup.toLatLng
 
@@ -118,21 +121,6 @@ class MainActivityViewModel(
 
     fun deleteRecentPrediction(prediction: DestinationPrediction) {
         destinationRepository.deleteRecentDestinationById(prediction.placeId)
-    }
-
-    fun setSessionRange(range: SessionRange) {
-        sessionRepository.currentSession.value = currentSession.value!!.edit(range)
-    }
-
-    fun setSessionActive() {
-        requireLocation {
-            sessionRepository.currentSession.value =
-                currentSession.value!!.edit(SessionStatus.Active)
-        }
-    }
-
-    fun cancelSession() {
-        sessionRepository.currentSession.value = null
     }
 
     fun clickPoi(poi: PointOfInterest) {
