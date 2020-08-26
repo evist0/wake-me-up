@@ -127,8 +127,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
     private fun observeSession() {
         viewModel.currentSession.observe(this, Observer { session ->
             if (session != null) {
-                viewModel.isShowMyLocation.value = false
-
                 val distanceChipId = when (session.range) {
                     SessionRange.Default -> R.id.defaultDistanceChip
                     SessionRange.Near -> R.id.nearDistanceChip
@@ -142,8 +140,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                         radius = session.range.toMeters()
                         isVisible = true
                     }
-
-                    focusCamera()
                 }
             } else {
                 destinationMarker.apply {
@@ -154,10 +150,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
     }
 
     private fun focusCamera() {
-        if (viewModel.isShowMyLocation.value != true && viewModel.currentSession.value == null) {
-            return
-        }
-
         val myLocation = viewModel.location.value?.toLatLng()
         val destinationLatLng = viewModel.currentSession.value?.details?.latLng
         val cameraUpdate =
@@ -312,13 +304,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                 when (reason) {
                     GoogleMap.OnCameraMoveStartedListener.REASON_GESTURE -> {
                         camera.clear()
-                        viewModel.isShowMyLocation.value = false
+                        viewModel.onGestureMove()
                     }
                 }
             }
 
             setOnPoiClickListener { poi ->
-                viewModel.clickPoi(poi)
+                viewModel.selectPoi(poi)
             }
         }
 
@@ -384,7 +376,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
     private fun observeMyLastLocation() {
         viewModel.location.observe(this, Observer { location ->
             locationMarker.animateLocation(location) {
-                focusCamera()
+                viewModel.onMarkerMoved()
             }
         })
     }
@@ -472,7 +464,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
 
     private fun initMyLocationButton() {
         myLocationButton.setOnClickListener {
-            viewModel.showMyLocation { focusCamera() }
+            viewModel.toggleShowMyLocation()
         }
     }
 
@@ -483,7 +475,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
     }
 
     private fun observeIsFocused() {
-        viewModel.isShowMyLocation.observe(this, Observer { isFocused ->
+        viewModel.isFocused.observe(this, Observer { isFocused ->
             val tint = if (isFocused) {
                 val typedValue = TypedValue()
                 theme.resolveAttribute(R.attr.colorControlActivated, typedValue, true)
@@ -494,6 +486,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
                 getColor(typedValue.resourceId)
             }
             myLocationButton.imageTintList = ColorStateList.valueOf(tint)
+
+            if (isFocused) {
+                focusCamera()
+            }
         })
     }
 }

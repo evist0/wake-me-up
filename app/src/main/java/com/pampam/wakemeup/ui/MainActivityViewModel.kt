@@ -19,10 +19,37 @@ class MainActivityViewModel(
     val location: LiveData<Location> = locationRepository.location
     val isLocationAvailable: LiveData<Boolean> = locationRepository.isLocationAvailable
     val hasLocationPermission = locationRepository.hasLocationPermission
-    val isShowMyLocation = MutableLiveData<Boolean>(false)
+
+    val currentSession: LiveData<Session?> = sessionRepository.currentSession
+
+    private val mMarkerMoved = MutableLiveData<Boolean>()
+
+    private val mFocusRequested = MutableLiveData<Boolean>(false)
+    val isFocused = MediatorLiveData<Boolean>().apply {
+        addSource(mFocusRequested) {
+            value = it
+        }
+        addSource(mMarkerMoved) {
+            if (value == true) {
+                value = true
+            }
+        }
+        addSource(currentSession) {
+            if (currentSession.value?.details != null) {
+                value = true
+            }
+        }
+    }
 
     private val mIsSearching = MutableLiveData<Boolean>(false)
-    val isSearching: LiveData<Boolean> = mIsSearching
+    val isSearching: LiveData<Boolean> =
+        Transformations.switchMap(currentSession) { currentSession ->
+            if (currentSession != null) {
+                MutableLiveData(false)
+            } else {
+                mIsSearching
+            }
+        }
 
     val destinationSearchQuery = MutableLiveData<String>()
 
@@ -41,8 +68,6 @@ class MainActivityViewModel(
                 MutableLiveData(emptyList())
             }
         }
-
-    val currentSession: LiveData<Session?> = sessionRepository.currentSession
 
     private val mIsLocationPermissionPopupVisible = MutableLiveData<Boolean>(false)
     val isLocationPermissionPopupVisible = MediatorLiveData<Boolean>().apply {
@@ -75,19 +100,27 @@ class MainActivityViewModel(
             mIsLocationAvailabilityPopupVisible.value = true
             false
         }
+        location.value == null -> {
+            false
+        }
         else -> {
             invokable()
             true
         }
     }
 
-    fun showMyLocation(focusFunction: () -> Unit) {
+    fun toggleShowMyLocation() {
         requireLocation {
-            isShowMyLocation.value = !isShowMyLocation.value!!
-            if (isShowMyLocation.value == true) {
-                focusFunction()
-            }
+            mFocusRequested.value = !mFocusRequested.value!!
         }
+    }
+
+    fun onMarkerMoved() {
+        mMarkerMoved.value = true
+    }
+
+    fun onGestureMove() {
+        mFocusRequested.value = false
     }
 
     fun beginSearch() {
@@ -100,8 +133,6 @@ class MainActivityViewModel(
     }
 
     fun endSearch(prediction: DestinationPrediction) {
-        closeSearch()
-
         sessionRepository.currentSession.value = Session()
 
         val detailsLiveData = autocompleteSession!!.fetchDetails(prediction)
@@ -135,7 +166,7 @@ class MainActivityViewModel(
         sessionRepository.currentSession.value = null
     }
 
-    fun clickPoi(poi: PointOfInterest) {
+    fun selectPoi(poi: PointOfInterest) {
         sessionRepository.currentSession.value = Session()
 
         val detailsLiveData = destinationRepository.fetchDetails(poi)
