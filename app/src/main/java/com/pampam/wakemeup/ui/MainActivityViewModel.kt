@@ -6,12 +6,10 @@ import com.google.android.gms.maps.model.PointOfInterest
 import com.pampam.wakemeup.data.DestinationRepository
 import com.pampam.wakemeup.data.LocationRepository
 import com.pampam.wakemeup.data.SessionRepository
-import com.pampam.wakemeup.data.model.DestinationPrediction
 import com.pampam.wakemeup.data.model.Session
 import com.pampam.wakemeup.data.model.SessionRange
 import com.pampam.wakemeup.data.model.SessionStatus
 import com.pampam.wakemeup.observeOnce
-import com.pampam.wakemeup.toLatLng
 
 class MainActivityViewModel(
     locationRepository: LocationRepository,
@@ -43,34 +41,6 @@ class MainActivityViewModel(
             }
         }
     }
-
-    private val mIsSearching = MutableLiveData<Boolean>(false)
-    val isSearching: LiveData<Boolean> =
-        Transformations.switchMap(currentSession) { currentSession ->
-            if (currentSession != null) {
-                MutableLiveData(false)
-            } else {
-                mIsSearching
-            }
-        }
-
-    val destinationSearchQuery = MutableLiveData<String>()
-
-    private var autocompleteSession: DestinationRepository.AutocompleteSession? = null
-    val suggestedDestinations: LiveData<List<DestinationPrediction>> =
-        Transformations.switchMap(isSearching) { isSearching ->
-            if (isSearching) {
-                val currentAutocompleteSession =
-                    autocompleteSession ?: destinationRepository.newAutocompleteSession()
-                autocompleteSession = currentAutocompleteSession
-                Transformations.switchMap(destinationSearchQuery) { searchQuery ->
-                    currentAutocompleteSession.updateQuery(location.value?.toLatLng(), searchQuery)
-                    currentAutocompleteSession.autocompletionLiveData
-                }
-            } else {
-                MutableLiveData(emptyList())
-            }
-        }
 
     private val mIsLocationPermissionPopupVisible = MutableLiveData<Boolean>(false)
     val isLocationPermissionPopupVisible = MediatorLiveData<Boolean>().apply {
@@ -124,34 +94,6 @@ class MainActivityViewModel(
 
     fun onGestureMove() {
         mFocusRequested.value = false
-    }
-
-    fun beginSearch() {
-        mIsSearching.value = true
-        destinationSearchQuery.value = ""
-    }
-
-    fun closeSearch() {
-        mIsSearching.value = false
-    }
-
-    fun endSearch(prediction: DestinationPrediction) {
-        sessionRepository.currentSession.value = Session()
-
-        val detailsLiveData = autocompleteSession!!.fetchDetails(prediction)
-        detailsLiveData.observeOnce(Observer { details ->
-            val previousSession = currentSession.value
-            if (previousSession != null) {
-                sessionRepository.currentSession.value =
-                    Session(details, SessionStatus.Inactive, SessionRange.Default)
-            }
-        })
-
-        autocompleteSession = null
-    }
-
-    fun deleteRecentPrediction(prediction: DestinationPrediction) {
-        destinationRepository.deleteRecentDestinationById(prediction.placeId)
     }
 
     fun selectPoi(poi: PointOfInterest) {

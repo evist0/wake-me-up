@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/main">
+    <fragment
+        android:id="@+id/main"
+        android:name="com.pampam.wakemeup.ui.MainFragment">
+        <action
+            android:id="@+id/action_main_to_searching"
+            app:destination="@id/search" />
+    </fragment>
+    <fragment
+        android:id="@+id/search"
+        android:name="com.pampam.wakemeup.ui.SearchFragment">
+        <action
+            android:id="@+id/action_searching_to_sessionDetails"
+            app:destination="@id/session" />
+        <action
+            android:id="@+id/action_search_to_main"
+            app:destination="@id/main" />
+    </fragment>
+    <fragment
+        android:id="@+id/session"
+        android:name="com.pampam.wakemeup.ui.SessionFragment">
+        <action
+            android:id="@+id/action_sessionDetails_to_main"
+            app:destination="@id/main" />
+    </fragment>
+</navigation>

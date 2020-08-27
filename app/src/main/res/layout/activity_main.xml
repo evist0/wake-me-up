@@ -50,53 +50,21 @@
                 android:src="@drawable/ic_baseline_near_me_24"
                 app:backgroundTint="?attr/colorBackgroundFloating"
                 app:fabCustomSize="50dp"
-                app:layout_constraintBottom_toTopOf="@id/searchDetailsLayout"
+                app:layout_constraintBottom_toTopOf="@+id/fragment"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:tint="?attr/colorControlNormal" />
 
-            <FrameLayout
-                android:id="@+id/searchDetailsLayout"
+            <androidx.fragment.app.FragmentContainerView
+                android:id="@+id/fragment"
+                android:name="androidx.navigation.fragment.NavHostFragment"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
+                app:defaultNavHost="true"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintLeft_toLeftOf="parent"
-                app:layout_constraintRight_toRightOf="parent">
-
-                <androidx.fragment.app.FragmentContainerView
-                    android:id="@+id/detailsCardView"
-                    android:name="com.pampam.wakemeup.ui.SessionDetailsView"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    tools:layout="@layout/session_details" />
-
-                <com.mancj.materialsearchbar.MaterialSearchBar
-                    android:id="@+id/searchBar"
-                    style="@style/MaterialSearchBarDayNight"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginEnd="8dp"
-                    android:clipToPadding="false"
-                    android:hapticFeedbackEnabled="true"
-                    android:paddingLeft="10dp"
-                    android:paddingTop="8dp"
-                    android:paddingRight="10dp"
-                    android:paddingBottom="24dp"
-                    android:visibility="@{viewModel.currentSession != null ? View.GONE : View.VISIBLE}"
-                    app:mt_backIconTint="?attr/colorControlNormal"
-                    app:mt_borderlessRippleEnabled="false"
-                    app:mt_clearIconTint="?attr/colorControlNormal"
-                    app:mt_hint="ДК &quot; Металлург &quot;"
-                    app:mt_maxSuggestionsCount="10"
-                    app:mt_placeholder="Введите название остановки"
-                    app:mt_roundedSearchBarEnabled="true"
-                    app:mt_searchIconTint="?attr/colorControlNormal"
-                    app:mt_speechMode="false"
-                    app:mt_suggestionsAnimationSpeed="200">
-
-                </com.mancj.materialsearchbar.MaterialSearchBar>
-            </FrameLayout>
-
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:navGraph="@navigation/nav_graph" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

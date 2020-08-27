@@ -8,7 +8,7 @@ import com.pampam.wakemeup.data.model.SessionRange
 import com.pampam.wakemeup.data.model.SessionStatus
 import com.pampam.wakemeup.data.model.edit
 
-class SessionDetailsViewModel(private val sessionRepository: SessionRepository) : ViewModel() {
+class SessionViewModel(private val sessionRepository: SessionRepository) : ViewModel() {
     val currentSession: LiveData<Session?> = sessionRepository.currentSession
 
     fun setSessionRange(range: SessionRange) {

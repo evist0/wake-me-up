@@ -52,6 +52,8 @@ dependencies {
     implementation 'com.google.android.gms:play-services-location:17.0.0'
     implementation "androidx.room:room-runtime:$room_version"
     implementation project(path: ':MaterialSearchBarLibrary')
+    implementation 'androidx.navigation:navigation-fragment-ktx:2.3.0'
+    implementation 'androidx.navigation:navigation-ui-ktx:2.3.0'
     kapt "androidx.room:room-compiler:$room_version"
     testImplementation 'junit:junit:4.13'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
@@ -63,5 +65,5 @@ dependencies {
     implementation "org.koin:koin-androidx-fragment:$koin_version"
     implementation "org.koin:koin-androidx-ext:$koin_version"
     implementation "io.reactivex.rxjava3:rxjava:3.0.6"
-    // debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.4'
+/*    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.4'*/
 }

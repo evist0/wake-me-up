@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+
+        <variable
+            name="viewModel"
+            type="com.pampam.wakemeup.ui.SearchViewModel" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.mancj.materialsearchbar.MaterialSearchBar
+            android:id="@+id/searchBar"
+            style="@style/MaterialSearchBarDayNight"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="false"
+            android:clipToPadding="false"
+            android:focusable="false"
+            android:paddingLeft="10dp"
+            android:paddingTop="8dp"
+            android:paddingRight="10dp"
+            android:paddingBottom="24dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:mt_backIconTint="?attr/colorControlNormal"
+            app:mt_borderlessRippleEnabled="false"
+            app:mt_clearIconTint="?attr/colorControlNormal"
+            app:mt_hint="ДК &quot; Металлург &quot;"
+            app:mt_maxSuggestionsCount="10"
+            app:mt_placeholder="Введите название остановки"
+            app:mt_roundedSearchBarEnabled="true"
+            app:mt_searchIconTint="?attr/colorControlNormal"
+            app:mt_speechMode="false" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

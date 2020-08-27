@@ -9,15 +9,15 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import com.pampam.wakemeup.R
 import com.pampam.wakemeup.data.model.SessionRange
-import com.pampam.wakemeup.databinding.SessionDetailsBinding
-import kotlinx.android.synthetic.main.session_details.*
+import com.pampam.wakemeup.databinding.FragmentSessionBinding
+import kotlinx.android.synthetic.main.fragment_session.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 
-class SessionDetailsView : Fragment() {
+class SessionFragment : Fragment() {
 
-    private val viewModel by viewModel<SessionDetailsViewModel>()
-    private lateinit var binding: SessionDetailsBinding
+    private val viewModel by viewModel<SessionViewModel>()
+    private lateinit var binding: FragmentSessionBinding
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -25,7 +25,7 @@ class SessionDetailsView : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         binding = DataBindingUtil.inflate(
-            inflater, R.layout.session_details, container, false
+            inflater, R.layout.fragment_session, container, false
         )
 
         binding.viewModel = this.viewModel
@@ -43,7 +43,7 @@ class SessionDetailsView : Fragment() {
         observeSession()
     }
 
-    fun initDistanceChipGroup() {
+    private fun initDistanceChipGroup() {
         detailsDistanceChipGroup.setOnCheckedChangeListener { _, checkedId ->
             val session = viewModel.currentSession.value
             if (session != null) {
@@ -60,13 +60,13 @@ class SessionDetailsView : Fragment() {
         }
     }
 
-    fun initAwakeButton() {
+    private fun initAwakeButton() {
         awakeButton.setOnClickListener {
             viewModel.setSessionActive()
         }
     }
 
-    fun initCancelButton() {
+    private fun initCancelButton() {
         cancelButton.setOnClickListener {
             viewModel.cancelSession()
         }

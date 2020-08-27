@@ -9,7 +9,8 @@ import com.pampam.wakemeup.data.SessionRepository
 import com.pampam.wakemeup.data.db.AppDatabase
 import com.pampam.wakemeup.ui.AlarmActivityViewModel
 import com.pampam.wakemeup.ui.MainActivityViewModel
-import com.pampam.wakemeup.ui.SessionDetailsViewModel
+import com.pampam.wakemeup.ui.SearchViewModel
+import com.pampam.wakemeup.ui.SessionViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.core.context.startKoin
@@ -38,7 +39,8 @@ class Application : Application() {
             single { SessionRepository() }
 
             viewModel { MainActivityViewModel(get(), get(), get()) }
-            viewModel { SessionDetailsViewModel(get()) }
+            viewModel { SessionViewModel(get()) }
+            viewModel { SearchViewModel(get(), get(), get()) }
             viewModel { AlarmActivityViewModel(get()) }
         }
 

@@ -16,12 +16,8 @@ import android.provider.Settings
 import android.util.Log
 import android.util.TypedValue
 import androidx.appcompat.app.AppCompatActivity
-import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.app.ActivityCompat
 import androidx.core.graphics.ColorUtils
-import androidx.core.view.marginEnd
-import androidx.core.view.marginStart
-import androidx.core.widget.addTextChangedListener
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -31,7 +27,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.SphericalUtil
-import com.mancj.materialsearchbar.MaterialSearchBar.OnSearchActionListener
+
 import com.pampam.wakemeup.BuildConfig
 import com.pampam.wakemeup.LocationAlarmService
 import com.pampam.wakemeup.R
@@ -42,7 +38,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 
 private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
 
-class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionListener {
+class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var binding: ActivityMainBinding
     private val viewModel by viewModel<MainActivityViewModel>()
@@ -65,33 +61,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
 
         inflateWithDataBinding()
 
-        initSearchBar()
         initMapAsync()
-    }
-
-    private fun observeIsSearching() {
-        viewModel.isSearching.observe(this, Observer { isSearching ->
-            if (isSearching) {
-                searchBar.openSearch()
-            } else {
-                searchBar.closeSearch()
-            }
-
-            ConstraintSet().apply {
-                clone(controlsLayout)
-                clear(
-                    R.id.searchDetailsLayout,
-                    if (isSearching) ConstraintSet.BOTTOM else ConstraintSet.TOP
-                )
-                connect(
-                    R.id.searchDetailsLayout,
-                    if (isSearching) ConstraintSet.TOP else ConstraintSet.BOTTOM,
-                    R.id.controlsLayout,
-                    if (isSearching) ConstraintSet.TOP else ConstraintSet.BOTTOM
-                )
-                applyTo(controlsLayout)
-            }
-        })
     }
 
     private fun observeSession() {
@@ -242,18 +212,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         }
     }
 
-    override fun onButtonClicked(buttonCode: Int) {}
-
-    override fun onSearchStateChanged(enabled: Boolean) {
-        if (enabled && viewModel.isSearching.value != enabled) {
-            viewModel.beginSearch()
-        } else if (!enabled && viewModel.isSearching.value != enabled) {
-            viewModel.closeSearch()
-        }
-    }
-
-    override fun onSearchConfirmed(query: CharSequence?) {}
-
     override fun onMapReady(it: GoogleMap) {
         map = it.apply {
             val mapStyle =
@@ -277,20 +235,16 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
             }
         }
 
-
         initEnqueuedCamera()
         initLocationPermissionPopup()
         initLocationAvailabilityPopup()
         initMyLocationMarker()
         initMyLocationButton()
-        initSearchDetailsLayout()
 
         observeIsLocationAvailable()
         observeHasLocationPermissionPopupVisible()
         observeIsLocationAvailablePopupVisible()
         observeIsFocused()
-        observeIsSearching()
-        observeSuggestedDestinations()
         observeMyLastLocation()
         observeSession()
     }
@@ -315,22 +269,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         viewModel.isLocationAvailabilityPopupVisible.observe(this, Observer { visible ->
             if (visible) locationAvailabilityPopup.show() else locationAvailabilityPopup.dismiss()
         })
-    }
-
-    private fun initSearchDetailsLayout() {
-        searchDetailsLayout.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
-            val paddingBottom =
-                controlsLayout.paddingBottom +
-                        if (viewModel.isSearching.value == false || viewModel.currentSession.value != null)
-                            searchDetailsLayout.height
-                        else 0
-            map.setPadding(
-                searchBar.marginStart + searchBar.paddingStart + controlsLayout.paddingStart,
-                controlsLayout.paddingTop,
-                searchBar.marginEnd + searchBar.paddingEnd + controlsLayout.paddingEnd,
-                paddingBottom
-            )
-        }
     }
 
     private fun observeMyLastLocation() {
@@ -406,32 +344,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnSearchActionList
         rootView.addView(locationAvailabilityPopup)
     }
 
-    private fun initSearchBar() {
-        val predictionsAdapter = DestinationPredictionsAdapter(layoutInflater).apply {
-            onPredictionSelect = { prediction ->
-                viewModel.endSearch(prediction)
-            }
-            onPredictionDelete = { prediction ->
-                viewModel.deleteRecentPrediction(prediction)
-            }
-        }
-        searchBar.setCustomSuggestionAdapter(predictionsAdapter)
-        searchBar.searchEditText.addTextChangedListener { editable ->
-            viewModel.destinationSearchQuery.value = editable.toString()
-        }
-        searchBar.setOnSearchActionListener(this)
-    }
-
     private fun initMyLocationButton() {
         myLocationButton.setOnClickListener {
             viewModel.toggleShowMyLocation()
         }
-    }
-
-    private fun observeSuggestedDestinations() {
-        viewModel.suggestedDestinations.observe(this, Observer { suggestedDestinations ->
-            searchBar.updateLastSuggestions(suggestedDestinations)
-        })
     }
 
     private fun observeIsFocused() {
