@@ -17,4 +17,5 @@
     <string name="notification_channel_alarm_name">Будильник</string>
     <string name="alarm_title">Ваша остановка</string>
     <string name="alarm_accept">Уже выхожу!</string>
+    <string name="searchBar_placeholder">Введите название остановки</string>
 </resources>

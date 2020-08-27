@@ -19,4 +19,5 @@
     <string name="notification_channel_alarm_name">Alarm</string>
     <string name="alarm_title">Your destination</string>
     <string name="alarm_accept">Thank you!</string>
+    <string name="searchBar_placeholder">Enter transit station</string>
 </resources>

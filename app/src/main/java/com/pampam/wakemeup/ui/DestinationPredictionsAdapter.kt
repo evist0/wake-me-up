@@ -1,10 +1,10 @@
+package com.pampam.wakemeup.ui/*
 package com.pampam.wakemeup.ui
 
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.mancj.materialsearchbar.adapter.SuggestionsAdapter
 import com.pampam.wakemeup.R
 import com.pampam.wakemeup.data.model.DestinationPrediction
 import com.pampam.wakemeup.data.model.DestinationPredictionSource
@@ -59,4 +59,4 @@ class DestinationPredictionsAdapter(layoutInflater: LayoutInflater) :
         return 50
     }
 
-}
+}*/
