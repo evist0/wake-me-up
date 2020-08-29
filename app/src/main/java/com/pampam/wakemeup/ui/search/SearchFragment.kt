@@ -2,6 +2,7 @@ package com.pampam.wakemeup.ui.search
 
 import android.content.Context
 import android.os.Bundle
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -73,6 +74,17 @@ class SearchFragment : Fragment() {
         predictionsRecyclerView.apply {
             adapter = concatAdapter
             layoutManager = LinearLayoutManager(context)
+            setOnScrollChangeListener { _, _, _, _, _ ->
+                searchTextInputLayout.elevation =
+                    if (predictionsRecyclerView.canScrollVertically(-1)) {
+                        TypedValue.applyDimension(
+                            TypedValue.COMPLEX_UNIT_DIP,
+                            4.0f, resources.displayMetrics
+                        )
+                    } else {
+                        0.0f
+                    }
+            }
         }
 
         viewModel.recentPredictions.observe(viewLifecycleOwner, Observer { recentPredictions ->
