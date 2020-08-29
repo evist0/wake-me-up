@@ -20,7 +20,7 @@
     <string name="notification_channel_alarm_name">Alarm</string>
     <string name="alarm_title">Your destination</string>
     <string name="alarm_dismiss">Thank you!</string>
-    <string name="search_placeholder">Search for transit stations &amp; Recents</string>
+    <string name="search_placeholder">Search for transit stations &amp; recents</string>
     <string name="marker_image_view_description">Location marker image</string>
     <string name="recent_image_view_description">Recent image</string>
     <string name="delete_image_view_description">Delete recent</string>
