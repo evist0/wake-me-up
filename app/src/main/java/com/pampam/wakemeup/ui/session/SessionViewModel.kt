@@ -3,12 +3,18 @@ package com.pampam.wakemeup.ui.session
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.pampam.wakemeup.data.LocationRepository
 import com.pampam.wakemeup.data.SessionRepository
 import com.pampam.wakemeup.data.model.Session
 import com.pampam.wakemeup.data.model.SessionRange
 import com.pampam.wakemeup.data.model.SessionStatus
+import com.pampam.wakemeup.extensions.isDismissRationaleRequired
+import com.pampam.wakemeup.extensions.toLatLng
 
-class SessionViewModel(private val sessionRepository: SessionRepository) : ViewModel() {
+class SessionViewModel(
+    private val locationRepository: LocationRepository,
+    private val sessionRepository: SessionRepository
+) : ViewModel() {
     val session: LiveData<Session?> = sessionRepository.currentSession
 
     private val mCancelSessionDialogVisible = MutableLiveData<Boolean>()
@@ -24,7 +30,9 @@ class SessionViewModel(private val sessionRepository: SessionRepository) : ViewM
     }
 
     fun onCancelButtonClick() {
-        if (session.value!!.status == SessionStatus.Active) {
+        val session = session.value!!
+        val location = locationRepository.location.value
+        if (session.isDismissRationaleRequired(location?.toLatLng())) {
             mCancelSessionDialogVisible.value = true
         } else {
             sessionRepository.currentSession.value = null
@@ -32,7 +40,9 @@ class SessionViewModel(private val sessionRepository: SessionRepository) : ViewM
     }
 
     fun onBackPressed() {
-        if (session.value!!.status == SessionStatus.Active) {
+        val session = session.value!!
+        val location = locationRepository.location.value
+        if (session.isDismissRationaleRequired(location?.toLatLng())) {
             mCancelSessionDialogVisible.value = true
         } else {
             sessionRepository.currentSession.value = null

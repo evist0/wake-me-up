@@ -1,17 +1,22 @@
 package com.pampam.wakemeup.ui
 
 import android.location.Location
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MediatorLiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.*
+import com.google.android.gms.maps.model.PointOfInterest
 import com.pampam.wakemeup.data.LocationRepository
+import com.pampam.wakemeup.data.PredictionsDestinationsRepository
 import com.pampam.wakemeup.data.SessionRepository
 import com.pampam.wakemeup.data.model.Session
+import com.pampam.wakemeup.data.model.SessionRange
+import com.pampam.wakemeup.data.model.SessionStatus
+import com.pampam.wakemeup.extensions.isDismissRationaleRequired
+import com.pampam.wakemeup.extensions.observeOnce
+import com.pampam.wakemeup.extensions.toLatLng
 
 class MainViewModel(
     private val locationRepository: LocationRepository,
-    sessionRepository: SessionRepository
+    private val predictionsDestinationsRepository: PredictionsDestinationsRepository,
+    private val sessionRepository: SessionRepository
 ) : ViewModel() {
     val location: LiveData<Location> = locationRepository.location
     val isLocationAvailable: LiveData<Boolean> = locationRepository.isLocationAvailable
@@ -115,6 +120,27 @@ class MainViewModel(
 
     fun onGestureCameraMove() {
         mFocusRequested.value = false
+    }
+
+    fun onPoiSelect(pointOfInterest: PointOfInterest): Boolean {
+        val session = sessionRepository.currentSession.value
+        val location = location.value
+        if (session?.isDismissRationaleRequired(location?.toLatLng()) != true) {
+            sessionRepository.currentSession.value = Session()
+
+            val detailsLiveData =
+                predictionsDestinationsRepository.fetchDestination(pointOfInterest.placeId)
+            detailsLiveData.observeOnce(Observer { details ->
+                val previousSession = sessionRepository.currentSession.value
+                if (previousSession != null) {
+                    sessionRepository.currentSession.value =
+                        Session(details, SessionStatus.Inactive, SessionRange.Default)
+                }
+            })
+
+            return true
+        }
+        return false
     }
 
     fun setMapPadding(padding: Padding) {

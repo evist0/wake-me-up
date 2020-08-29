@@ -190,7 +190,11 @@ class PredictionsDestinationsRepository(
         }
 
         fun fetchDestinationFromPrediction(prediction: Prediction): LiveData<Destination> {
-            return fetchDetails(prediction.placeId)
+            return fetchDestination(
+                prediction.placeId,
+                prediction.primaryText,
+                prediction.secondaryText
+            )
         }
     }
 
@@ -206,7 +210,11 @@ class PredictionsDestinationsRepository(
         return session
     }
 
-    fun fetchDetails(placeId: String): LiveData<Destination> {
+    fun fetchDestination(
+        placeId: String,
+        primaryText: String? = null,
+        secondaryText: String? = null
+    ): LiveData<Destination> {
         val destinationDetailsLiveData = MutableLiveData<Destination>()
 
         val fetchDetailsFromDao = { dao: DestinationCacheDao ->
@@ -214,8 +222,8 @@ class PredictionsDestinationsRepository(
             destinationDetailsLiveData.postValue(
                 Destination(
                     entity.placeId,
-                    entity.primaryText,
-                    entity.secondaryText,
+                    primaryText ?: entity.primaryText,          // если сменился язык
+                    secondaryText ?: entity.secondaryText,    // неплохо обновить
                     LatLng(entity.latitude, entity.longitude)
                 )
             )

@@ -39,8 +39,8 @@ class Application : Application() {
 
             single { SessionRepository() }
 
-            viewModel { MainViewModel(get(), get()) }
-            viewModel { SessionViewModel(get()) }
+            viewModel { MainViewModel(get(), get(), get()) }
+            viewModel { SessionViewModel(get(), get()) }
             viewModel {
                 SearchViewModel(
                     get(),

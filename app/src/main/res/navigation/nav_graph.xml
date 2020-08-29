@@ -13,9 +13,6 @@
             app:exitAnim="@anim/slide_in_up"
             app:popEnterAnim="@anim/slide_in_down"
             app:popExitAnim="@anim/slide_in_down" />
-        <action
-            android:id="@+id/action_browse_to_session"
-            app:destination="@id/session" />
     </fragment>
     <fragment
         android:id="@+id/search"
@@ -31,4 +28,12 @@
     <fragment
         android:id="@+id/session"
         android:name="com.pampam.wakemeup.ui.session.SessionFragment" />
+    <action
+        android:id="@+id/action_global_session"
+        app:destination="@id/session"
+        app:enterAnim="@anim/slide_in_up"
+        app:exitAnim="@anim/slide_in_down"
+        app:launchSingleTop="true"
+        app:popEnterAnim="@anim/slide_in_up"
+        app:popExitAnim="@anim/slide_in_down" />
 </navigation>

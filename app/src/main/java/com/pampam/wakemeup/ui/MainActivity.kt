@@ -141,6 +141,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             uiSettings.isIndoorLevelPickerEnabled = false
             uiSettings.isMapToolbarEnabled = false
 
+            setOnPoiClickListener { poi/*bota*/ ->
+                if (viewModel.onPoiSelect(poi)) {
+                    navController.navigate(R.id.action_global_session)
+                }
+            }
+
             with(BitmapFactoryExt(resources)) {
                 val locationMarkerOptions = LocationMarker.Options(
                     movingBitmap = decodeResourceScaled(
@@ -177,7 +183,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         ),
                         strokeColor = getColor(R.color.primaryLightColor),
                         strokeWidth = 5.0f,
-                        animationDuration = 1000/*MILLIS*/
+                        animationDuration = 600/*MILLIS*/
                     )
                 destinationMarker = addDestinationMarker(destinationMarkerOptions)
             }

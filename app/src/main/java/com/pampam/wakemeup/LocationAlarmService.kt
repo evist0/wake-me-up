@@ -19,6 +19,7 @@ import com.pampam.wakemeup.data.LocationRepository
 import com.pampam.wakemeup.data.SessionRepository
 import com.pampam.wakemeup.data.model.Session
 import com.pampam.wakemeup.data.model.SessionStatus
+import com.pampam.wakemeup.extensions.inRange
 import com.pampam.wakemeup.extensions.toLatLng
 import com.pampam.wakemeup.ui.MainActivity
 import com.pampam.wakemeup.ui.alarm.AlarmActivity
@@ -378,20 +379,15 @@ class LocationAlarmService : Service() {
         Log.d(LocationAlarmService::class.simpleName, "generateNotification()")
 
         val session = sessionRepository.currentSession.value!!
-        val details = session.details!!
-        val destinationLocation = details.latLng
-
         val currentLocation = {
             val location = locationRepository.location.value!!
             location.toLatLng()
         }()
 
-        val distance = SphericalUtil.computeDistanceBetween(destinationLocation, currentLocation)
-
-        return if (distance > session.range.toMeters()) {
-            generateInfoNotification()
-        } else {
+        return if (session.inRange(currentLocation)) {
             generateAlertNotification()
+        } else {
+            generateInfoNotification()
         }
     }
 
