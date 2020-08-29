@@ -19,8 +19,10 @@ import com.pampam.wakemeup.data.LocationRepository
 import com.pampam.wakemeup.data.SessionRepository
 import com.pampam.wakemeup.data.model.Session
 import com.pampam.wakemeup.data.model.SessionStatus
-import com.pampam.wakemeup.ui.AlarmActivity
+import com.pampam.wakemeup.extensions.toLatLng
 import com.pampam.wakemeup.ui.MainActivity
+import com.pampam.wakemeup.ui.alarm.AlarmActivity
+import com.pampam.wakemeup.utils.WeakLocationCallback
 import org.koin.android.ext.android.inject
 import java.util.concurrent.TimeUnit
 
@@ -81,7 +83,8 @@ class LocationAlarmService : Service() {
                 locationRepository.isLocationAvailable.value = result.isLocationAvailable
             }
         }
-        weakLocationCallback = WeakLocationCallback(locationCallback)
+        weakLocationCallback =
+            WeakLocationCallback(locationCallback)
 
         mediaPlayer = MediaPlayer().apply {
             setAudioAttributes(

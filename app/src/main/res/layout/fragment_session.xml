@@ -12,18 +12,21 @@
 
         <variable
             name="viewModel"
-            type="com.pampam.wakemeup.ui.SessionViewModel" />
+            type="com.pampam.wakemeup.ui.session.SessionViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/sessionRootLayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="true">
 
         <androidx.cardview.widget.CardView
+            android:id="@+id/sessionCardView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:visibility="@{viewModel.currentSession != null ? View.VISIBLE : View.GONE}"
+            android:layout_margin="16dp"
+            android:visibility="@{viewModel.session != null ? View.VISIBLE : View.GONE}"
             app:cardCornerRadius="20dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -46,13 +49,13 @@
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:visibility="@{viewModel.currentSession.status == SessionStatus.Fetching ? View.GONE : View.VISIBLE}">
+                        android:visibility="@{viewModel.session.status == SessionStatus.Fetching ? View.GONE : View.VISIBLE}">
 
                         <com.google.android.material.textview.MaterialTextView
                             android:id="@+id/detailsPrimaryText"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@{viewModel.currentSession.details.primaryText}"
+                            android:text="@{viewModel.session.details.primaryText}"
                             android:textAlignment="center"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
                             app:layout_constraintTop_toTopOf="parent" />
@@ -61,7 +64,7 @@
                             android:id="@+id/detailsSecondaryText"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@{viewModel.currentSession.details.secondaryText}"
+                            android:text="@{viewModel.session.details.secondaryText}"
                             android:textAlignment="center"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
                             app:layout_constraintTop_toBottomOf="@id/detailsPrimaryText" />
@@ -105,7 +108,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:padding="32dp"
-                        android:visibility="@{viewModel.currentSession.status == SessionStatus.Fetching ? View.VISIBLE : View.GONE}" />
+                        android:visibility="@{viewModel.session.status == SessionStatus.Fetching ? View.VISIBLE : View.GONE}" />
                 </FrameLayout>
 
                 <LinearLayout
@@ -121,9 +124,9 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:enabled="@{viewModel.currentSession.status != SessionStatus.Fetching ? true : false}"
+                        android:enabled="@{viewModel.session.status != SessionStatus.Fetching ? true : false}"
                         android:text="@string/details_awake_button"
-                        android:visibility="@{viewModel.currentSession.status != SessionStatus.Active ? View.VISIBLE : View.GONE}" />
+                        android:visibility="@{viewModel.session.status != SessionStatus.Active ? View.VISIBLE : View.GONE}" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/cancelButton"

@@ -3,14 +3,14 @@ package com.pampam.wakemeup
 import android.app.Application
 import androidx.room.Room
 import com.google.android.libraries.places.api.Places
-import com.pampam.wakemeup.data.DestinationRepository
 import com.pampam.wakemeup.data.LocationRepository
+import com.pampam.wakemeup.data.PredictionsDestinationsRepository
 import com.pampam.wakemeup.data.SessionRepository
 import com.pampam.wakemeup.data.db.AppDatabase
-import com.pampam.wakemeup.ui.AlarmActivityViewModel
-import com.pampam.wakemeup.ui.MainActivityViewModel
-import com.pampam.wakemeup.ui.SearchViewModel
-import com.pampam.wakemeup.ui.SessionViewModel
+import com.pampam.wakemeup.ui.MainViewModel
+import com.pampam.wakemeup.ui.alarm.AlarmViewModel
+import com.pampam.wakemeup.ui.search.SearchViewModel
+import com.pampam.wakemeup.ui.session.SessionViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.core.context.startKoin
@@ -32,16 +32,23 @@ class Application : Application() {
         val appModule = module {
             single { Places.createClient(this@Application) }
             single { appDatabase.getLastDestinationDao() }
-            single { DestinationRepository(get(), get()) }
+            single { appDatabase.getRemotePredictionCacheDao() }
+            single { PredictionsDestinationsRepository(get(), get(), get()) }
 
             single { LocationRepository() }
 
             single { SessionRepository() }
 
-            viewModel { MainActivityViewModel(get(), get(), get()) }
+            viewModel { MainViewModel(get(), get()) }
             viewModel { SessionViewModel(get()) }
-            viewModel { SearchViewModel(get(), get(), get()) }
-            viewModel { AlarmActivityViewModel(get()) }
+            viewModel {
+                SearchViewModel(
+                    get(),
+                    get(),
+                    get()
+                )
+            }
+            viewModel { AlarmViewModel(get()) }
         }
 
         startKoin {

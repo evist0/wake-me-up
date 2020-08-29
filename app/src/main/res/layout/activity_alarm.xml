@@ -8,7 +8,7 @@
 
         <variable
             name="viewModel"
-            type="com.pampam.wakemeup.ui.AlarmActivityViewModel" />
+            type="com.pampam.wakemeup.ui.alarm.AlarmViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -48,7 +48,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="64dp"
             android:onClick="@{(view) -> viewModel.accept()}"
-            android:text="@string/alarm_accept"
+            android:text="@string/alarm_dismiss"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" />

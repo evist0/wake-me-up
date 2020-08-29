@@ -64,5 +64,10 @@ dependencies {
     implementation "org.koin:koin-androidx-fragment:$koin_version"
     implementation "org.koin:koin-androidx-ext:$koin_version"
     implementation "io.reactivex.rxjava3:rxjava:3.0.6"
+    implementation 'io.reactivex.rxjava3:rxandroid:3.0.0'
+    implementation "androidx.paging:paging-runtime:2.1.2"
+    implementation 'com.facebook.shimmer:shimmer:0.5.0'
+    implementation "androidx.recyclerview:recyclerview:1.2.0-alpha05"
+    debugImplementation 'com.amitshekhar.android:debug-db:1.0.6'
 /*    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.4'*/
 }

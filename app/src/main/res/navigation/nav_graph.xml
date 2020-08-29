@@ -2,29 +2,33 @@
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/main">
+    app:startDestination="@id/browse">
     <fragment
-        android:id="@+id/main"
-        android:name="com.pampam.wakemeup.ui.MainFragment">
+        android:id="@+id/browse"
+        android:name="com.pampam.wakemeup.ui.browse.BrowseFragment">
         <action
-            android:id="@+id/action_main_to_searching"
-            app:destination="@id/search" />
+            android:id="@+id/action_browse_to_searching"
+            app:destination="@id/search"
+            app:enterAnim="@anim/slide_in_up"
+            app:exitAnim="@anim/slide_in_up"
+            app:popEnterAnim="@anim/slide_in_down"
+            app:popExitAnim="@anim/slide_in_down" />
+        <action
+            android:id="@+id/action_browse_to_session"
+            app:destination="@id/session" />
     </fragment>
     <fragment
         android:id="@+id/search"
-        android:name="com.pampam.wakemeup.ui.SearchFragment">
+        android:name="com.pampam.wakemeup.ui.search.SearchFragment">
         <action
-            android:id="@+id/action_searching_to_sessionDetails"
-            app:destination="@id/session" />
-        <action
-            android:id="@+id/action_search_to_main"
-            app:destination="@id/main" />
+            android:id="@+id/action_searching_to_session"
+            app:destination="@id/session"
+            app:enterAnim="@anim/slide_in_up"
+            app:exitAnim="@anim/slide_in_down"
+            app:popEnterAnim="@anim/slide_in_up"
+            app:popExitAnim="@anim/slide_in_down" />
     </fragment>
     <fragment
         android:id="@+id/session"
-        android:name="com.pampam.wakemeup.ui.SessionFragment">
-        <action
-            android:id="@+id/action_sessionDetails_to_main"
-            app:destination="@id/main" />
-    </fragment>
+        android:name="com.pampam.wakemeup.ui.session.SessionFragment" />
 </navigation>

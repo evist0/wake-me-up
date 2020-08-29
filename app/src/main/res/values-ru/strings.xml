@@ -3,12 +3,12 @@
     <string name="notification_open">Открыть</string>
     <string name="notification_cancel">Отменить</string>
     <string name="notification_main_text">Осталось %1$.0f%2$s</string>
-    <string name="popup_accept_text">ОК</string>
-    <string name="popup_dismiss_text">Позже</string>
-    <string name="location_permission_title">Разрешение местоположения</string>
-    <string name="location_permission_message">Ваше местоположение необходимо приложению для функционирования</string>
-    <string name="location_unavailable_title">Местоположение недоступно</string>
-    <string name="location_unavailable_message">Ваше местоположение необходимо приложению для функционирования</string>
+    <string name="dialog_positive_text">ОК</string>
+    <string name="dialog_negative_text">Нет</string>
+    <string name="location_permission_dialog_title">Разрешение местоположения</string>
+    <string name="location_permission_dialog_message">Ваше местоположение необходимо приложению для функционирования</string>
+    <string name="location_unavailable_dialog_title">Местоположение недоступно</string>
+    <string name="location_unavailable_dialog_message">Ваше местоположение необходимо приложению для функционирования</string>
     <string name="details_awake_button">Разбудить</string>
     <string name="details_cancel_button">Отмена</string>
     <string name="meters_short">м</string>
@@ -16,6 +16,11 @@
     <string name="notification_channel_info_name">Расстояние</string>
     <string name="notification_channel_alarm_name">Будильник</string>
     <string name="alarm_title">Ваша остановка</string>
-    <string name="alarm_accept">Уже выхожу!</string>
-    <string name="searchBar_placeholder">Введите название остановки</string>
+    <string name="alarm_dismiss">Уже выхожу!</string>
+    <string name="search_placeholder">Введите название остановки</string>
+    <string name="marker_image_view_description">Картинка местоположения</string>
+    <string name="recent_image_view_description">Картинка недавно</string>
+    <string name="delete_image_view_description">Удалить недавние</string>
+    <string name="cancel_session_dialog_title">Вы уверены?</string>
+    <string name="cancel_session_dialog_message">Вы хотите отменить текущую сессию?</string>
 </resources>
