@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.addCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.marginBottom
 import androidx.core.view.marginLeft
@@ -93,6 +94,10 @@ class SessionFragment : Fragment() {
             viewModel.onCancelButtonClick()
         }
 
+        requireActivity().onBackPressedDispatcher.addCallback(this) {
+            viewModel.onBackPressed()
+        }
+
         with(viewModel) {
             session.observe(viewLifecycleOwner, Observer { session ->
                 if (session != null) {
@@ -117,10 +122,5 @@ class SessionFragment : Fragment() {
                 }
             })
         }
-    }
-
-    fun onBackPressed(): Boolean {
-        viewModel.onBackPressed()
-        return viewModel.session.value == null
     }
 }

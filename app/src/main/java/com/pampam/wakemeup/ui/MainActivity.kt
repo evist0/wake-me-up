@@ -33,7 +33,6 @@ import com.pampam.wakemeup.databinding.ActivityMainBinding
 import com.pampam.wakemeup.extensions.toLatLng
 import com.pampam.wakemeup.extensions.updatePadding
 import com.pampam.wakemeup.ui.map.*
-import com.pampam.wakemeup.ui.session.SessionFragment
 import com.pampam.wakemeup.utils.BitmapFactoryExt
 import kotlinx.android.synthetic.main.activity_main.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -134,25 +133,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    override fun onBackPressed() {
-        val fragment =
-            supportFragmentManager.findFragmentById(R.id.navHostFragment)?.childFragmentManager?.fragments?.get(
-                0
-            )
-
-        val shouldNavigateUp = if (fragment is SessionFragment) {
-            fragment.onBackPressed()
-        } else {
-            true
-        }
-
-        if (shouldNavigateUp) {
-            if (!navController.popBackStack()) {
-                finish()
-            }
-        }
-    }
-
     override fun onMapReady(map: GoogleMap) {
         googleMap = map.apply {
             val mapStyle = MapStyleOptions.loadRawResourceStyle(this@MainActivity, R.raw.mapstyle)
@@ -187,7 +167,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 val destinationMarkerOptions =
                     DestinationMarker.Options(
                         iconBitmap = decodeResourceScaled(
-                            R.drawable.destination,
+                            R.drawable.ic_destination,
                             96,
                             96
                         ),

@@ -17,7 +17,7 @@
     <string name="notification_channel_alarm_name">Будильник</string>
     <string name="alarm_title">Ваша остановка</string>
     <string name="alarm_dismiss">Уже выхожу!</string>
-    <string name="search_placeholder">Введите название остановки</string>
+    <string name="search_placeholder">Поиск остановок &amp; Недавние</string>
     <string name="marker_image_view_description">Картинка местоположения</string>
     <string name="recent_image_view_description">Картинка недавно</string>
     <string name="delete_image_view_description">Удалить недавние</string>

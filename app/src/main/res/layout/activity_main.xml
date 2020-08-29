@@ -43,7 +43,7 @@
                 android:contentDescription="@string/show_me"
                 android:longClickable="false"
                 android:src="@drawable/ic_baseline_near_me_24"
-                app:backgroundTint="?attr/colorBackgroundFloating"
+                app:backgroundTint="?attr/colorSurface"
                 app:fabCustomSize="48dp"
                 app:tint="?attr/colorControlNormal" />
         </FrameLayout>
