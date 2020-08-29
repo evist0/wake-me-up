@@ -13,10 +13,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="?attr/colorSurface"
-        android:paddingLeft="16dp"
-        android:paddingTop="16dp"
-        android:paddingRight="16dp">
+        android:background="?attr/colorSurface">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="0dp"
@@ -29,13 +26,16 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/searchTextInputLayout"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:background="?colorSurface"
                 app:endIconMode="clear_text"
+                android:paddingTop="4dp"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toTopOf="@id/predictionsRecyclerView"
                 app:startIconDrawable="@drawable/quantum_ic_arrow_back_grey600_24">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -44,6 +44,7 @@
                     android:layout_height="wrap_content"
                     android:imeOptions="flagNoFullscreen"
                     android:maxLines="1"
+                    android:layout_margin="8dp"
                     android:singleLine="true"
                     android:text="@={viewModel.query}" />
             </com.google.android.material.textfield.TextInputLayout>
@@ -52,8 +53,11 @@
                 android:id="@+id/predictionsRecyclerView"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:paddingTop="8dp"
                 android:clipToPadding="false"
+                android:overScrollMode="never"
+                android:paddingLeft="8dp"
+                android:paddingTop="8dp"
+                android:paddingRight="8dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
