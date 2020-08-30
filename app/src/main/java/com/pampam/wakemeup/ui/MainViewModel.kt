@@ -140,7 +140,12 @@ class MainViewModel(
         }
     }
 
+    fun onSessionChangeDialogNegative() {
+        mPendingPoiToChangeSession.value = null
+    }
+
     fun onSessionChangeDialogPositive(pointOfInterest: PointOfInterest) {
+        mPendingPoiToChangeSession.value = null
         fetchSessionFromPoi(pointOfInterest)
     }
 

@@ -46,6 +46,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var locationPermissionDialog: AlertDialog
     private lateinit var locationAvailabilityDialog: AlertDialog
+
+    private var changeSessionDialog: AlertDialog? = null
     private lateinit var changeSessionDialogBuilder: MaterialAlertDialogBuilder
 
     private lateinit var googleMap: GoogleMap
@@ -99,7 +101,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         changeSessionDialogBuilder = MaterialAlertDialogBuilder(this)
             .setTitle(R.string.change_session_dialog_title)
             .setMessage(R.string.change_session_dialog_message)
-            .setNegativeButton(R.string.dialog_negative_text) { _, _ -> }
 
         with(supportFragmentManager.findFragmentById(R.id.supportMapFragment) as SupportMapFragment) {
             getMapAsync(this@MainActivity)
@@ -132,10 +133,16 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onStop() {
         super.onStop()
 
+        locationAvailabilityDialog.dismiss()
+        locationPermissionDialog.dismiss()
+        changeSessionDialog?.dismiss()
+
         if (locationServiceBound && !isChangingConfigurations) {
             unbindService(locationServiceConnection)
             locationServiceBound = false
         }
+
+        changeSessionDialogBuilder
     }
 
     override fun onMapReady(map: GoogleMap) {
@@ -240,9 +247,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
 
             pendingPoiToChangeSession.observe(this@MainActivity) { poi ->
-                changeSessionDialogBuilder.setPositiveButton(R.string.dialog_positive_text) { _, _ ->
-                    viewModel.onSessionChangeDialogPositive(poi)
-                }.show()
+                poi?.let {
+                    changeSessionDialog?.dismiss()
+                    changeSessionDialog =
+                        changeSessionDialogBuilder.setNegativeButton(R.string.dialog_negative_text) { _, _ ->
+                            viewModel.onSessionChangeDialogNegative()
+                        }.setPositiveButton(R.string.dialog_positive_text) { _, _ ->
+                            viewModel.onSessionChangeDialogPositive(it)
+                        }.show()
+                }
             }
 
             session.observe(this@MainActivity) { session ->
