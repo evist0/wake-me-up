@@ -140,6 +140,22 @@ class MainViewModel(
         }
     }
 
+    fun onLocationAvailabilityDialogNegative() {
+        mIsLocationAvailabilityDialogVisible.value = false
+    }
+
+    fun onLocationAvailabilityDialogPositive() {
+        mIsLocationAvailabilityDialogVisible.value = false
+    }
+
+    fun onLocationPermissionDialogNegative() {
+        mIsLocationPermissionDialogVisible.value = false
+    }
+
+    fun onLocationPermissionDialogPositive() {
+        mIsLocationPermissionDialogVisible.value = false
+    }
+
     fun onSessionChangeDialogNegative() {
         mPendingPoiToChangeSession.value = null
     }

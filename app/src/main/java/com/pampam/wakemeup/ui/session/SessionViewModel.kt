@@ -51,7 +51,12 @@ class SessionViewModel(
         }
     }
 
-    fun onPositiveCancelDialog() {
+    fun onPositiveCancelSessionDialog() {
+        mCancelSessionDialogVisible.value = false
         sessionRepository.currentSession.value = null
+    }
+
+    fun onNegativeCancelSessionDialog() {
+        mCancelSessionDialogVisible.value = false
     }
 }

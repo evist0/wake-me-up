@@ -11,7 +11,6 @@ import androidx.core.view.marginLeft
 import androidx.core.view.marginRight
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.pampam.wakemeup.R
@@ -46,9 +45,11 @@ class SessionFragment : Fragment() {
         cancelSessionDialog = MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.cancel_session_dialog_title)
             .setMessage(R.string.cancel_session_dialog_message)
-            .setNegativeButton(R.string.dialog_negative_text) { _, _ -> }
+            .setNegativeButton(R.string.dialog_negative_text) { _, _ ->
+                viewModel.onNegativeCancelSessionDialog()
+            }
             .setPositiveButton(R.string.dialog_positive_text) { _, _ ->
-                viewModel.onPositiveCancelDialog()
+                viewModel.onPositiveCancelSessionDialog()
             }
             .create()
 
@@ -99,7 +100,7 @@ class SessionFragment : Fragment() {
         }
 
         with(viewModel) {
-            session.observe(viewLifecycleOwner, Observer { session ->
+            session.observe(viewLifecycleOwner) { session ->
                 if (session != null) {
                     val distanceChipId = when (session.range) {
                         SessionRange.Default -> R.id.defaultDistanceChip
@@ -110,17 +111,23 @@ class SessionFragment : Fragment() {
                 } else {
                     navController.popBackStack()
                 }
-            })
+            }
 
-            cancelSessionDialogVisible.observe(viewLifecycleOwner, Observer { visible ->
+            cancelSessionDialogVisible.observe(viewLifecycleOwner) { visible ->
                 with(cancelSessionDialog) {
                     if (visible) {
                         show()
                     } else {
-                        hide()
+                        dismiss()
                     }
                 }
-            })
+            }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        cancelSessionDialog.dismiss()
     }
 }

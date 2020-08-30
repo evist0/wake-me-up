@@ -74,8 +74,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         locationPermissionDialog = MaterialAlertDialogBuilder(this)
             .setTitle(R.string.location_permission_dialog_title)
             .setMessage(R.string.location_permission_dialog_message)
-            .setNegativeButton(R.string.dialog_negative_text) { _, _ -> }
+            .setNegativeButton(R.string.dialog_negative_text) { _, _ ->
+                viewModel.onLocationPermissionDialogNegative()
+            }
             .setPositiveButton(R.string.dialog_positive_text) { _, _ ->
+                viewModel.onLocationPermissionDialogPositive()
+
                 val intent = Intent()
                 intent.action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
                 val uri = Uri.fromParts(
@@ -91,8 +95,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         locationAvailabilityDialog = MaterialAlertDialogBuilder(this)
             .setTitle(R.string.location_unavailable_dialog_title)
             .setMessage(R.string.location_unavailable_dialog_message)
-            .setNegativeButton(R.string.dialog_negative_text) { _, _ -> }
+            .setNegativeButton(R.string.dialog_negative_text) { _, _ ->
+                viewModel.onLocationAvailabilityDialogNegative()
+            }
             .setPositiveButton(R.string.dialog_positive_text) { _, _ ->
+                viewModel.onLocationAvailabilityDialogPositive()
+
                 val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
                 startActivity(intent)
             }
@@ -231,7 +239,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     if (visible) {
                         show()
                     } else {
-                        hide()
+                        dismiss()
                     }
                 }
             }
@@ -241,7 +249,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     if (visible) {
                         show()
                     } else {
-                        hide()
+                        dismiss()
                     }
                 }
             }
