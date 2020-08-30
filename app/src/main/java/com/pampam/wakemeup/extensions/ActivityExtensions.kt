@@ -19,7 +19,9 @@ fun Activity.turnScreenOnAndKeyguardOff() {
 
     with(getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            requestDismissKeyguard(this@turnScreenOnAndKeyguardOff, null)
+            if (isKeyguardLocked) {
+                requestDismissKeyguard(this@turnScreenOnAndKeyguardOff, null)
+            }
         }
     }
 }
