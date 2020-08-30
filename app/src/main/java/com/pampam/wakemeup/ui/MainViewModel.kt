@@ -1,7 +1,10 @@
 package com.pampam.wakemeup.ui
 
 import android.location.Location
-import androidx.lifecycle.*
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MediatorLiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import com.google.android.gms.maps.model.PointOfInterest
 import com.pampam.wakemeup.data.LocationRepository
 import com.pampam.wakemeup.data.PredictionsDestinationsRepository
@@ -26,7 +29,7 @@ class MainViewModel(
 
     private val mMarkerMoved = MutableLiveData<Boolean>()
 
-    private val mFocusRequested = MutableLiveData<Boolean>(false)
+    private val mFocusRequested = MutableLiveData<Boolean>()
     val isFocused: LiveData<Boolean> = MediatorLiveData<Boolean>().apply {
         addSource(mFocusRequested) { requested ->
             value = requested
@@ -53,7 +56,7 @@ class MainViewModel(
         }
     }
 
-    private val mIsLocationPermissionDialogVisible = MutableLiveData<Boolean>(false)
+    private val mIsLocationPermissionDialogVisible = MutableLiveData<Boolean>()
     val isLocationPermissionDialogVisible: LiveData<Boolean> = MediatorLiveData<Boolean>().apply {
         addSource(hasLocationPermission) { isHas ->
             this.value = !isHas
@@ -64,9 +67,9 @@ class MainViewModel(
         }
     }
 
-    private val mIsLocationAvailabilityDialogVisible = MutableLiveData<Boolean>(false)
+    private val mIsLocationAvailabilityDialogVisible = MutableLiveData<Boolean>()
     val isLocationAvailabilityDialogVisible: LiveData<Boolean> = MediatorLiveData<Boolean>().apply {
-        addSource(locationRepository.isLocationAvailable) { isAvailable ->
+        addSource(isLocationAvailable) { isAvailable ->
             this.value = !isAvailable
         }
 
@@ -77,20 +80,6 @@ class MainViewModel(
 
     private val mMapPadding = MutableLiveData<Padding>()
     val mapPadding: LiveData<Padding> = mMapPadding
-
-    private fun requireLocation(invokable: () -> Unit) = when {
-        hasLocationPermission.value != true -> {
-            mIsLocationPermissionDialogVisible.value = true
-        }
-        isLocationAvailable.value != true -> {
-            mIsLocationAvailabilityDialogVisible.value = true
-        }
-        location.value == null -> {
-        }
-        else -> {
-            invokable()
-        }
-    }
 
     fun onLocationPermissionApproved() {
         locationRepository.hasLocationPermission.value = true
@@ -109,8 +98,8 @@ class MainViewModel(
     }
 
     fun onMyLocationClick() {
-        requireLocation {
-            mFocusRequested.value = !mFocusRequested.value!!
+        locationRepository.requireLocation {
+            mFocusRequested.value = mFocusRequested.value != true
         }
     }
 
@@ -130,13 +119,13 @@ class MainViewModel(
 
             val detailsLiveData =
                 predictionsDestinationsRepository.fetchDestination(pointOfInterest.placeId)
-            detailsLiveData.observeOnce(Observer { details ->
+            detailsLiveData.observeOnce { details ->
                 val previousSession = sessionRepository.currentSession.value
                 if (previousSession != null) {
                     sessionRepository.currentSession.value =
                         Session(details, SessionStatus.Inactive, SessionRange.Default)
                 }
-            })
+            }
 
             return true
         }

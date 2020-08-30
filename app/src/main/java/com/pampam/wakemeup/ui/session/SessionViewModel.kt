@@ -25,8 +25,10 @@ class SessionViewModel(
     }
 
     fun onAwakeButtonClick() {
-        sessionRepository.currentSession.value =
-            session.value!!.copy(status = SessionStatus.Active)
+        locationRepository.requireLocation {
+            sessionRepository.currentSession.value =
+                session.value!!.copy(status = SessionStatus.Active)
+        }
     }
 
     fun onCancelButtonClick() {
