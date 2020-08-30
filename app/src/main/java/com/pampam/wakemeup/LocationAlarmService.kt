@@ -304,7 +304,7 @@ class LocationAlarmService : Service() {
             this,
             NOTIFICATION_CHANNEL_INFO_ID
         ).apply {
-            setSmallIcon(R.drawable.ic_launcher_foreground)
+            setSmallIcon(R.drawable.ic_foreground)
             setContentTitle(title)
             setContentText(text)
             setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
@@ -357,7 +357,7 @@ class LocationAlarmService : Service() {
             this,
             NOTIFICATION_CHANNEL_ALARM_ID
         ).apply {
-            setSmallIcon(R.drawable.ic_launcher_foreground)
+            setSmallIcon(R.drawable.ic_foreground)
             setContentTitle(title)
             setContentText(text)
             priority = NotificationCompat.PRIORITY_HIGH
