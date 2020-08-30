@@ -3,7 +3,6 @@ package com.pampam.wakemeup.data.db
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
-import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "remotePredictionCache",
@@ -23,10 +22,10 @@ import androidx.room.PrimaryKey
             onDelete = ForeignKey.CASCADE
         )
     ],
+    primaryKeys = ["placeId", "text"],
     indices = [Index(value = ["text", "originSectorLat", "originSectorLng"])]
 )
 data class RemotePredictionCacheEntity(
-    @PrimaryKey
     val placeId: String,
     val primaryText: String,
     val secondaryText: String,
