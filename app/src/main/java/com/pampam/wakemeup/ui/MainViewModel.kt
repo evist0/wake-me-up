@@ -78,8 +78,25 @@ class MainViewModel(
         }
     }
 
+    private val mPendingPoiToChangeSession = MutableLiveData<PointOfInterest>()
+    val pendingPoiToChangeSession: LiveData<PointOfInterest> = mPendingPoiToChangeSession
+
     private val mMapPadding = MutableLiveData<Padding>()
     val mapPadding: LiveData<Padding> = mMapPadding
+
+    private fun fetchSessionFromPoi(pointOfInterest: PointOfInterest) {
+        sessionRepository.currentSession.value = Session()
+
+        val detailsLiveData =
+            predictionsDestinationsRepository.fetchDestination(pointOfInterest.placeId)
+        detailsLiveData.observeOnce { details ->
+            val previousSession = sessionRepository.currentSession.value
+            if (previousSession != null) {
+                sessionRepository.currentSession.value =
+                    Session(details, SessionStatus.Inactive, SessionRange.Default)
+            }
+        }
+    }
 
     fun onLocationPermissionApproved() {
         locationRepository.hasLocationPermission.value = true
@@ -114,22 +131,17 @@ class MainViewModel(
     fun onPoiSelect(pointOfInterest: PointOfInterest): Boolean {
         val session = sessionRepository.currentSession.value
         val location = location.value
-        if (session?.isDismissRationaleRequired(location?.toLatLng()) != true) {
-            sessionRepository.currentSession.value = Session()
-
-            val detailsLiveData =
-                predictionsDestinationsRepository.fetchDestination(pointOfInterest.placeId)
-            detailsLiveData.observeOnce { details ->
-                val previousSession = sessionRepository.currentSession.value
-                if (previousSession != null) {
-                    sessionRepository.currentSession.value =
-                        Session(details, SessionStatus.Inactive, SessionRange.Default)
-                }
-            }
-
-            return true
+        return if (session?.isDismissRationaleRequired(location?.toLatLng()) != true) {
+            fetchSessionFromPoi(pointOfInterest)
+            true
+        } else {
+            mPendingPoiToChangeSession.value = pointOfInterest
+            false
         }
-        return false
+    }
+
+    fun onSessionChangeDialogPositive(pointOfInterest: PointOfInterest) {
+        fetchSessionFromPoi(pointOfInterest)
     }
 
     fun setMapPadding(padding: Padding) {

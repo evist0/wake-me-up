@@ -18,7 +18,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.graphics.ColorUtils
 import androidx.databinding.DataBindingUtil
-import androidx.lifecycle.Observer
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import com.google.android.gms.maps.GoogleMap
@@ -47,6 +46,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var locationPermissionDialog: AlertDialog
     private lateinit var locationAvailabilityDialog: AlertDialog
+    private lateinit var changeSessionDialogBuilder: MaterialAlertDialogBuilder
 
     private lateinit var googleMap: GoogleMap
 
@@ -95,6 +95,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 startActivity(intent)
             }
             .create()
+
+        changeSessionDialogBuilder = MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.change_session_dialog_title)
+            .setMessage(R.string.change_session_dialog_message)
+            .setNegativeButton(R.string.dialog_negative_text) { _, _ -> }
 
         with(supportFragmentManager.findFragmentById(R.id.supportMapFragment) as SupportMapFragment) {
             getMapAsync(this@MainActivity)
@@ -202,19 +207,19 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         with(viewModel) {
-            location.observe(this@MainActivity, Observer { location ->
+            location.observe(this@MainActivity) { location ->
                 val latLng = location.toLatLng()
                 locationMarker.animateLocation(latLng) {
                     locationCamera.location = latLng
                     viewModel.onMarkerMoved()
                 }
-            })
+            }
 
-            isLocationAvailable.observe(this@MainActivity, Observer { available ->
+            isLocationAvailable.observe(this@MainActivity) { available ->
                 locationMarker.locationAvailable = available
-            })
+            }
 
-            isLocationAvailabilityDialogVisible.observe(this@MainActivity, Observer { visible ->
+            isLocationAvailabilityDialogVisible.observe(this@MainActivity) { visible ->
                 with(locationAvailabilityDialog) {
                     if (visible) {
                         show()
@@ -222,9 +227,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         hide()
                     }
                 }
-            })
+            }
 
-            isLocationPermissionDialogVisible.observe(this@MainActivity, Observer { visible ->
+            isLocationPermissionDialogVisible.observe(this@MainActivity) { visible ->
                 with(locationPermissionDialog) {
                     if (visible) {
                         show()
@@ -232,9 +237,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         hide()
                     }
                 }
-            })
+            }
 
-            session.observe(this@MainActivity, Observer { session ->
+            pendingPoiToChangeSession.observe(this@MainActivity) { poi ->
+                changeSessionDialogBuilder.setPositiveButton(R.string.dialog_positive_text) { _, _ ->
+                    viewModel.onSessionChangeDialogPositive(poi)
+                }.show()
+            }
+
+            session.observe(this@MainActivity) { session ->
                 destinationMarker.apply {
                     position = session?.details?.latLng
                     if (session != null) {
@@ -242,9 +253,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     }
                 }
                 locationCamera.destination = session?.details?.latLng
-            })
+            }
 
-            isFocused.observe(this@MainActivity, Observer { isFocused ->
+            isFocused.observe(this@MainActivity) { isFocused ->
                 val tint = if (isFocused) {
                     val typedValue = TypedValue()
                     theme.resolveAttribute(R.attr.colorControlActivated, typedValue, true)
@@ -259,14 +270,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 if (isFocused) {
                     locationCamera.focus()
                 }
-            })
+            }
 
-
-
-            mapPadding.observe(this@MainActivity, Observer { padding ->
+            mapPadding.observe(this@MainActivity) { padding ->
                 googleMap.setPadding(padding.left, padding.top, padding.right, padding.bottom)
                 myLocationButtonLayout.updatePadding(padding)
-            })
+            }
         }
     }
 

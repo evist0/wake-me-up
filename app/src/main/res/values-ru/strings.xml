@@ -23,4 +23,6 @@
     <string name="delete_image_view_description">Удалить недавние</string>
     <string name="cancel_session_dialog_title">Вы уверены?</string>
     <string name="cancel_session_dialog_message">Вы хотите отменить текущую сессию?</string>
+    <string name="change_session_dialog_message">Вы хотите сменить сессию?</string>
+    <string name="change_session_dialog_title">Вы уверены?</string>
 </resources>

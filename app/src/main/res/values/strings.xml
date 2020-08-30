@@ -26,4 +26,6 @@
     <string name="delete_image_view_description">Delete recent</string>
     <string name="cancel_session_dialog_title">Are you sure?</string>
     <string name="cancel_session_dialog_message">Do you want to cancel current session?</string>
+    <string name="change_session_dialog_message">Do you want to change session?</string>
+    <string name="change_session_dialog_title">Are you sure?</string>
 </resources>
