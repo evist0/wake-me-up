@@ -12,8 +12,12 @@ import android.os.Looper
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.math.MathUtils.clamp
 import androidx.lifecycle.Observer
-import com.google.android.gms.location.*
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationAvailability
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
 import com.google.maps.android.SphericalUtil
 import com.pampam.wakemeup.data.LocationRepository
 import com.pampam.wakemeup.data.SessionRepository
@@ -21,11 +25,14 @@ import com.pampam.wakemeup.data.model.Session
 import com.pampam.wakemeup.data.model.SessionStatus
 import com.pampam.wakemeup.extensions.inRange
 import com.pampam.wakemeup.extensions.toLatLng
+import com.pampam.wakemeup.smartgps.SmartGps
+import com.pampam.wakemeup.smartgps.SmartLocationCallback
 import com.pampam.wakemeup.ui.MainActivity
 import com.pampam.wakemeup.ui.alarm.AlarmActivity
-import com.pampam.wakemeup.utils.WeakLocationCallback
 import org.koin.android.ext.android.inject
-import java.util.concurrent.TimeUnit
+import kotlin.math.ln
+import kotlin.math.pow
+import kotlin.math.roundToLong
 
 class LocationAlarmServiceBinder : Binder()
 
@@ -38,9 +45,7 @@ class LocationAlarmService : Service() {
     private lateinit var sessionObserver: Observer<Session?>
 
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
-    private lateinit var locationRequest: LocationRequest
-    private lateinit var locationCallback: LocationCallback
-    private lateinit var weakLocationCallback: WeakLocationCallback
+    private lateinit var smartGps: SmartGps
 
     private lateinit var mediaPlayer: MediaPlayer
 
@@ -57,35 +62,17 @@ class LocationAlarmService : Service() {
 
         fusedLocationProviderClient =
             LocationServices.getFusedLocationProviderClient(this)
-        locationRequest = LocationRequest().apply {
-            interval = TimeUnit.SECONDS.toMillis(5)
-            fastestInterval = TimeUnit.SECONDS.toMillis(2)
-            maxWaitTime = TimeUnit.SECONDS.toMillis(0)
-            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        }
-        locationCallback = object : LocationCallback() {
-            override fun onLocationResult(result: LocationResult) {
-                super.onLocationResult(result)
 
-                Log.d(this::class.simpleName, "onLocationResult(): $result")
-
-                locationRepository.location.value = result.lastLocation
-
-                if (serviceRunningInForeground) {
-                    updateForeground()
-                }
+        smartGps = SmartGps(SmartGps.Options { distance ->
+            if (serviceBound) {
+                5000
+            } else {
+                val c = 7.2
+                val b = 0.2
+                val a = 3.1
+                clamp(5.0 + (b * ln(distance + 1)).pow(a) * c, 5.0, 60.0).roundToLong() * 1000
             }
-
-            override fun onLocationAvailability(result: LocationAvailability) {
-                super.onLocationAvailability(result)
-
-                Log.d(this::class.simpleName, "onLocationAvailability(): $result")
-
-                locationRepository.isLocationAvailable.value = result.isLocationAvailable
-            }
-        }
-        weakLocationCallback =
-            WeakLocationCallback(locationCallback)
+        }, fusedLocationProviderClient)
 
         mediaPlayer = MediaPlayer().apply {
             setAudioAttributes(
@@ -232,27 +219,55 @@ class LocationAlarmService : Service() {
         Log.d(LocationAlarmService::class.simpleName, "subscribeToLocation()")
 
         startService(Intent(applicationContext, LocationAlarmService::class.java))
-        try {
-            fusedLocationProviderClient.requestLocationUpdates(
-                locationRequest, weakLocationCallback, Looper.myLooper()
-            ).addOnCompleteListener {
-                Log.d(LocationAlarmService::class.simpleName, "requestLocationUpdates() complete")
-            }.addOnFailureListener {
+        val locationCallback = object : SmartLocationCallback {
+            override fun onLocationResult(locationResult: LocationResult): Double {
+                Log.d(this::class.simpleName, "onLocationResult(): $locationResult")
+
+                locationRepository.location.value = locationResult.lastLocation
+
+                if (serviceRunningInForeground) {
+                    updateForeground()
+                }
+
+                val session = sessionRepository.currentSession.value
+                val details = session?.details
+                return if (details != null) {
+                    val destinationLocation = details.latLng
+                    val currentLocation = locationResult.lastLocation.toLatLng()
+                    val distance =
+                        SphericalUtil.computeDistanceBetween(destinationLocation, currentLocation)
+                    distance
+                } else {
+                    0.0
+                }
+            }
+
+            override fun onLocationAvailability(locationAvailability: LocationAvailability) {
+                Log.d(this::class.simpleName, "onLocationAvailability(): $locationAvailability")
+
+                locationRepository.isLocationAvailable.value =
+                    locationAvailability.isLocationAvailable
+            }
+
+            override fun onFailure(failureReason: SmartLocationCallback.FailureReason) {
                 Log.e(
                     LocationAlarmService::class.simpleName,
-                    "requestLocationUpdates() failure: $it"
+                    "requestLocationUpdates() failure: $failureReason"
                 )
+                when (failureReason) {
+                    SmartLocationCallback.FailureReason.Security ->
+                        locationRepository.hasLocationPermission.value = false
+                    else -> subscribeToLocation()
+                }
             }
-        } catch (e: SecurityException) {
-            Log.e(LocationAlarmService::class.simpleName, "Lost location permission $e")
-            locationRepository.hasLocationPermission.value = false
         }
+        smartGps.requestLocationUpdates(locationCallback, Looper.myLooper()!!)
     }
 
     private fun unsubscribeToLocation() {
         Log.d(LocationAlarmService::class.simpleName, "unsubscribeToLocation()")
 
-        fusedLocationProviderClient.removeLocationUpdates(weakLocationCallback)
+        smartGps.removeLocationUpdates()
             .addOnSuccessListener {
                 Log.d(LocationAlarmService::class.simpleName, "removeLocationUpdates() complete")
             }.addOnFailureListener {

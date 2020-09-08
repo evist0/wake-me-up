@@ -1,4 +1,4 @@
-package com.pampam.wakemeup.utils
+package com.pampam.wakemeup.smartgps
 
 import com.google.android.gms.location.LocationAvailability
 import com.google.android.gms.location.LocationCallback
