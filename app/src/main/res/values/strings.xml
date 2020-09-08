@@ -28,4 +28,5 @@
     <string name="cancel_session_dialog_message">Do you want to cancel current session?</string>
     <string name="change_session_dialog_message">Do you want to change session?</string>
     <string name="change_session_dialog_title">Are you sure?</string>
+    <string name="google_admob_id" translatable="false">ca-app-pub-6828857154273376~9021812077</string>
 </resources>

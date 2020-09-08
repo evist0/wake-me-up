@@ -20,6 +20,10 @@ import androidx.core.graphics.ColorUtils
 import androidx.databinding.DataBindingUtil
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.RequestConfiguration
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
@@ -35,6 +39,7 @@ import com.pampam.wakemeup.ui.map.*
 import com.pampam.wakemeup.utils.BitmapFactoryExt
 import kotlinx.android.synthetic.main.activity_main.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import java.util.*
 
 private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
 
@@ -113,6 +118,19 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         with(supportFragmentManager.findFragmentById(R.id.supportMapFragment) as SupportMapFragment) {
             getMapAsync(this@MainActivity)
         }
+
+        MobileAds.initialize(this) {}
+
+        val testDeviceIds = listOf(
+            "DB85503292CB7A4D5A1E8AEA6ADA2393",
+        )
+
+        val configuration = RequestConfiguration.Builder().setTestDeviceIds(testDeviceIds).build()
+        MobileAds.setRequestConfiguration(configuration)
+
+        val mAdView = findViewById<AdView>(R.id.adView)
+        val adRequest = AdRequest.Builder().build()
+        mAdView.loadAd(adRequest)
     }
 
     override fun onStart() {
