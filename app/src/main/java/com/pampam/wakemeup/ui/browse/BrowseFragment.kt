@@ -47,5 +47,11 @@ class BrowseFragment : Fragment() {
                 navController.navigate(R.id.action_browse_to_searching)
             }
         }
+
+        mainViewModel.session.observe(viewLifecycleOwner) { session ->
+            if (session != null) {
+                navController.navigate(R.id.action_global_session)
+            }
+        }
     }
 }
