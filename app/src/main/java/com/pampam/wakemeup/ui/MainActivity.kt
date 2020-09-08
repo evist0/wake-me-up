@@ -20,6 +20,9 @@ import androidx.core.graphics.ColorUtils
 import androidx.databinding.DataBindingUtil
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.RequestConfiguration
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
@@ -113,6 +116,19 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         with(supportFragmentManager.findFragmentById(R.id.supportMapFragment) as SupportMapFragment) {
             getMapAsync(this@MainActivity)
         }
+
+        MobileAds.initialize(this) {}
+
+        val testDeviceIds = listOf(
+            "DB85503292CB7A4D5A1E8AEA6ADA2393",
+            "29D173118ACFEAC98ACCCF26CEA6648A"
+        )
+
+        val configuration = RequestConfiguration.Builder().setTestDeviceIds(testDeviceIds).build()
+        MobileAds.setRequestConfiguration(configuration)
+
+        val adRequest = AdRequest.Builder().build()
+        adView.loadAd(adRequest)
     }
 
     override fun onStart() {

@@ -18,6 +18,7 @@ import com.pampam.wakemeup.data.model.SessionRange
 import com.pampam.wakemeup.databinding.FragmentSessionBinding
 import com.pampam.wakemeup.ui.MainViewModel
 import com.pampam.wakemeup.ui.Padding
+import kotlinx.android.synthetic.main.activity_main.view.*
 import kotlinx.android.synthetic.main.fragment_session.*
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -61,15 +62,17 @@ class SessionFragment : Fragment() {
 
         val navController = findNavController()
 
-        sessionCardView.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
-            mainViewModel.setMapPadding(
-                Padding(
-                    left = sessionRootLayout.paddingLeft + sessionCardView.marginLeft,
-                    top = sessionRootLayout.paddingTop,
-                    right = sessionRootLayout.paddingRight + sessionCardView.marginRight,
-                    bottom = sessionRootLayout.paddingBottom + sessionCardView.marginBottom + sessionCardView.height
+        sessionCardView.apply {
+            addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+                mainViewModel.setMapPadding(
+                    Padding(
+                        left = rootView.systemWindowsAwareLayout.paddingLeft + sessionCardView.marginLeft,
+                        top = rootView.systemWindowsAwareLayout.paddingTop + rootView.systemWindowsAwareLayout.adView.height,
+                        right = rootView.systemWindowsAwareLayout.paddingRight + sessionCardView.marginRight,
+                        bottom = rootView.systemWindowsAwareLayout.paddingBottom + sessionCardView.marginBottom + sessionCardView.height
+                    )
                 )
-            )
+            }
         }
 
         detailsDistanceChipGroup.setOnCheckedChangeListener { _, checkedId ->

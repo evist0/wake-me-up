@@ -12,6 +12,7 @@ import androidx.navigation.Navigation
 import com.pampam.wakemeup.R
 import com.pampam.wakemeup.ui.MainViewModel
 import com.pampam.wakemeup.ui.Padding
+import kotlinx.android.synthetic.main.activity_main.view.*
 import kotlinx.android.synthetic.main.fragment_browse.*
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 
@@ -35,10 +36,10 @@ class BrowseFragment : Fragment() {
             addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
                 mainViewModel.setMapPadding(
                     Padding(
-                        left = browseRootLayout.paddingLeft + searchCardView.marginLeft,
-                        top = browseRootLayout.paddingTop,
-                        right = browseRootLayout.paddingRight + searchCardView.marginRight,
-                        bottom = browseRootLayout.paddingBottom + searchCardView.marginBottom + searchCardView.height
+                        left = rootView.systemWindowsAwareLayout.paddingLeft + searchCardView.marginLeft,
+                        top = rootView.systemWindowsAwareLayout.paddingTop + rootView.systemWindowsAwareLayout.adView.height,
+                        right = rootView.systemWindowsAwareLayout.paddingRight + searchCardView.marginRight,
+                        bottom = rootView.systemWindowsAwareLayout.paddingBottom + searchCardView.marginBottom + searchCardView.height
                     )
                 )
             }
