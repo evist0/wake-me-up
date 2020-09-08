@@ -128,9 +128,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         val configuration = RequestConfiguration.Builder().setTestDeviceIds(testDeviceIds).build()
         MobileAds.setRequestConfiguration(configuration)
 
-        val mAdView = findViewById<AdView>(R.id.adView)
         val adRequest = AdRequest.Builder().build()
-        mAdView.loadAd(adRequest)
+        adView.loadAd(adRequest)
     }
 
     override fun onStart() {
