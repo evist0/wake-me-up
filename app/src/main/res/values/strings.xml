@@ -30,8 +30,8 @@
     <string name="change_session_dialog_title">Are you sure?</string>
 
     <!--DEBUG-->
-    <!--<string name="google_admob_id" translatable="false">ca-app-pub-3940256099942544~3347511713</string>-->
+    <string name="google_admob_id" translatable="false">ca-app-pub-3940256099942544~3347511713</string>
 
     <!--RELEASE-->
-    <string name="google_admob_id" translatable="false">ca-app-pub-6828857154273376~9021812077</string>
+    <!--    <string name="google_admob_id" translatable="false">ca-app-pub-6828857154273376~9021812077</string>-->
 </resources>
